@@ -1,0 +1,16 @@
+<% images.each do |image| %>
+  <%if !image.data.blank? %>
+  <li id='<%=image.file_id%>'>
+  	<a class='th' href="<%=url_for :controller=>'loans', :action=>'image',:id=>loan_id, :image_id=>image['file_id']%>">
+  		<img style='height:100px;width:100px;' src="<%=image['src']%>,<%=image['data']%>">
+  	</a>
+  	<BR>
+	<% if policy(Loan).update? %>
+	   <% url=url_for :controller=>'loans', :action=>'delete_image',:id=>image['file_id'] %>
+	  	<div onclick='callAjax("<%=url%>","<%=image.file_id%>" );' class='label alert' style='width:100%;text-align:center;cursor:pointer'>
+	  		Remove
+	  	</div>
+	<% end %>
+  </li>
+  <% end %>
+<% end %>

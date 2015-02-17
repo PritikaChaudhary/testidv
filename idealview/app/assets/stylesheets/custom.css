@@ -1,0 +1,47 @@
+.app-name-header{
+  font-size:1.5em;
+  font-style:italic;
+  font-weight:bold;
+  margin-left:30px;
+  color:#444444;
+}
+
+.loan-heading{
+	color:#888888;
+}
+
+
+.clearing-assembled .clearing-container .visible-img {
+background: #000000 !important;
+
+}
+
+.highlight-field{
+	margin-bottom:20px;
+}
+
+.bottom-space{
+	margin-bottom:20px !important
+}
+.custom-info{
+	margin-bottom:10px;
+}
+.tabs dd > a, .tabs .tab-title > a {
+	padding: 1rem 1.5rem !important;
+}
+
+.even-row{
+	background-color:#f2f2f2
+}
+
+.block-out{
+	position:fixed;
+	width:100%;
+	height:100%;
+	background:rgba(0, 0, 0, .8);
+	z-index:100;
+}
+
+.nda-background{
+	background:rgba(255,255,255, .8)
+}
