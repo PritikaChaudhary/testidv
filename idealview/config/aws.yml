@@ -1,0 +1,13 @@
+# Be sure to restart your server when you modify this file.
+# This is the configuration for the Amazon S3 storage service
+
+development:
+  access_key_id: AKIAJ62MUN64UV7HLZSA
+  secret_access_key: 5ZJr4TT4RSRmdkBzLWqjthkDSxJr5X6THNV8+KrR
+
+
+test:
+  <<: *development
+
+  production:
+    <<: *development  
