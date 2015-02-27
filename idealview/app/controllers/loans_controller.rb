@@ -4,6 +4,7 @@ class LoansController < ApplicationController
 
 
 
+
   def index
     authorize Loan
     @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
