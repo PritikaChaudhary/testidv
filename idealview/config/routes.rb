@@ -4,29 +4,35 @@ Rails.application.routes.draw do
 
   devise_for :users
   resources :loans
-
+  resources :loan_urls
+  
   root to: "home#index"
   
-  get 'home/test'=> 'home#test'
+  #get 'home/test'=> 'home#test'
   get 'loans/:id'=>'loans#show'
   get 'loans'=>'loans#index'
   post 'loans/edit_field/:id/:field'=>'loans#edit_field'
-  post 'loans/edit_category/:id'=>'loans#edit_category'
+  post 'loans/:id/edit_category'=>'loans#edit_category'
   post 'loans/edit_loan_type'=>'loans#edit_loan_type'
   post 'loans/images/:id'=>'loans#images'
   get 'loans/image/:id/:image_id'=>'loans#image'
-  post 'loans/upload_main_image/:id'=>'loans#upload_main_image'
-  post 'loans/upload_image/:id'=>'loans#upload_image'
+  post 'loans/:id/upload_main_image'=>'loans#upload_main_image'
+  post 'loans/:id/upload_image'=>'loans#upload_image'
   post 'loans/:id/delete_image'=>'loans#delete_image'
   get 'loans/view_doc/:id'=>'loans#view_doc'
   post 'loans/upload_doc/:id'=>'loans#upload_doc'
   post 'loans/update_amount_owed/:id'=>'loans#update_amount_owed'
-  post 'loans/get_url/:id'=>'loans#get_url'
-  post 'loans/reset_url/:id'=>'loans#reset_url'
-  get 'loans/reset_url/:id'=>'loans#reset_url'
-  post 'loans/nda'=>'loans#nda_signed'
 
-  get 'loans/temp/get_images'=>'loans#temp'
+
+  post 'loan_urls/:id'=>'loan_urls#destroy'
+  post 'loan_urls/:id/email_link'=>'loan_urls#email_link'
+
+  #post 'loans/get_url/:id'=>'loans#get_url'
+  #post 'loans/reset_url/:id'=>'loans#reset_url'
+  #get 'loans/reset_url/:id'=>'loans#reset_url'
+  #post 'loans/nda'=>'loans#nda_signed'
+
+  #get 'loans/temp/get_images'=>'loans#temp'
 
 
 

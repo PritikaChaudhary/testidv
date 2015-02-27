@@ -87,16 +87,26 @@ class LoansController < ApplicationController
   
   
   def show
-    @loan = Loan.find_by_url(params[:id].to_s)
+    loan_url = LoanUrl.find_by_url(params[:id])
+    if loan_url
+      @loan = loan_url.loan
+      if loan_url.visits.blank?
+        loan_url.visits = Array.new
+      end
+      loan_url.visits<<Time.now.getutc
+      loan_url.save
+      
+    end
     
-    if @loan.blank?
+    if @loan.blank? && !current_user.blank?
       @loan = Loan.find_by_id(params[:id].to_i)
     end
 
 
-    if @loan.blank? || (current_user.blank? && !@loan.url.blank? && (@loan.url !=params[:id].to_s))
+    if @loan.blank?
       flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
       redirect_to '/'
+      return
     end
 
     

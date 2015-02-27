@@ -1,8 +1,3 @@
-<!--
-<% if !@loan.nda_signed && !current_user %>
-<%= render partial: 'nda_form' %>	
-<% end %>
--->	
 
 <script>
 function handleMainImage(files) {
@@ -49,16 +44,8 @@ function handleMainImage(files) {
 </div>
 
 <% if policy(@loan).update? %>
-<div style='padding-left:50px;padding-right:50px;'>
-
-		<% @url=url_for :controller=>'loans', :action=>'get_url',:id=>@loan['_id']%>
-		  <%= button_tag "Get Url", data: { disable_with: "Please wait..." }, onclick:"callAjax('#{@url}','show-url');", class: 'tiny button', type:'button'%>
-		<% @url=url_for :controller=>'loans', :action=>'reset_url',:id=>@loan['_id']%>
-		  <%= button_tag "Reset Url", data: { disable_with: "Please wait..." }, onclick:"if(confirm('This will disable any links you have previously sent')){callAjax('#{@url}','show-url');}", class: 'tiny button', type: 'button'%>
-
-
-	<div id='show-url'></div>
-
+<div id='show-urls' style='padding-left:50px;padding-right:50px;'>
+	<%= render partial: 'loan_url_form'%>
 </div>
 <% end %>
 
