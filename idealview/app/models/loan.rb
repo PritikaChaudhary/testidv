@@ -5,6 +5,7 @@ class Loan
   many :images
   many :documents
   many :ndas
+  many :loan_urls
 
   key :name, String
   key :info, Object
@@ -53,32 +54,70 @@ class Loan
     end
     return 
   end
+
+
+
+  def get_s3_images
+    resp = S3.list_objects(
+      bucket: S3_BUCKET_NAME,
+      encoding_type: "url",
+      max_keys: 100,
+      prefix: self.id.to_s
+    )
+    output = Array.new
+      resp.each do |page|
+        page.each do |item|
+          item.contents.each do |image|
+            output<<image.key
+          end
+        end
+      end
+    output 
+
+  end
+
+
+
+
   
   def get_images
     fields = ['ContactId', 'Extension','FileName','Id','Public']
     files = Infusionsoft.data_find_by_field('FileBox',1000,0,'ContactId', self._id, fields)
     if !files.blank? and (files.is_a?(Array) or files.is_a?(Hash))
-    
       files.each do |file|
         ext = file['Extension'].downcase
         if ext =='png' || ext =='jpg' || ext =='jpeg' || ext =='gif'
-  
-          check = Image.find_by_file_id(file['Id'])
-          if check.blank?
-            image = Infusionsoft.file_get(file['Id'])
-            if !image.blank?
-              newImage = Image.new(:loan_id=>self._id,:file_id=>file['Id'], :name=>file['FileName'],:src=>"data:image/#{ext};base64",:data=>image);
-              newImage.save()
-            end
-            
+              file_name = file['FileName']
+              key_name = self.id.to_s+'/'+file_name
+               
+          
+          check = Image.find_by_name_and_loan_id(file['FileName'], self.id)
+          if !check.blank? && check.url.blank?
+            dbImage = check
+            dbImage.file_id = key_name
+            dbImage.name = file_name
+            dbImage.url = "https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{self.id}/#{file_name}"
+          
           else 
-            image = Infusionsoft.file_get(file['Id'])
-            if image.blank?
-              check.data = ''
-              check.save()
-            end
+              dbImage = Image.new(
+                            :loan_id=>self.id,
+                            :file_id=>key_name, 
+                            :name=>file_name, 
+                            :url=>"https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{self.id}/#{file_name}"
+                            ) 
+          end           
+          
+          image = Infusionsoft.file_get(file['Id'])
+          if !image.blank?
+              obj = S3.put_object(
+                acl: "public-read",
+                bucket: S3_BUCKET_NAME,
+                key: key_name,
+                body: Base64.decode64(image) 
+               )
+               dbImage.save
           end
-        end
+       end
       end
     end
     return self.images
@@ -136,6 +175,9 @@ class Loan
     return docs
   end 
   
+
+
+
   
   def docs_by_category category
     Document.find_all_by_loan_id_and_category(self._id, category)

@@ -17,7 +17,7 @@ Rails.application.routes.draw do
   get 'loans/image/:id/:image_id'=>'loans#image'
   post 'loans/upload_main_image/:id'=>'loans#upload_main_image'
   post 'loans/upload_image/:id'=>'loans#upload_image'
-  post 'loans/delete_image/:id'=>'loans#delete_image'
+  post 'loans/:id/delete_image'=>'loans#delete_image'
   get 'loans/view_doc/:id'=>'loans#view_doc'
   post 'loans/upload_doc/:id'=>'loans#upload_doc'
   post 'loans/update_amount_owed/:id'=>'loans#update_amount_owed'
@@ -26,7 +26,7 @@ Rails.application.routes.draw do
   get 'loans/reset_url/:id'=>'loans#reset_url'
   post 'loans/nda'=>'loans#nda_signed'
 
-
+  get 'loans/temp/get_images'=>'loans#temp'
 
 
 

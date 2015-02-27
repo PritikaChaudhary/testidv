@@ -50,16 +50,12 @@ function handleMainImage(files) {
 
 <% if policy(@loan).update? %>
 <div style='padding-left:50px;padding-right:50px;'>
-	<b>Add Allowed Emails (comma separated)</b>
-	<%= form_for(@loan) do |f| %>
-		<%= f.text_field :allowed_emails, autofocus: true, size: 100%>
-		<%= f.submit "Save Allowed Emails",data: { disable_with: "Please wait..." }, class: 'tiny button'%>
+
 		<% @url=url_for :controller=>'loans', :action=>'get_url',:id=>@loan['_id']%>
 		  <%= button_tag "Get Url", data: { disable_with: "Please wait..." }, onclick:"callAjax('#{@url}','show-url');", class: 'tiny button', type:'button'%>
 		<% @url=url_for :controller=>'loans', :action=>'reset_url',:id=>@loan['_id']%>
 		  <%= button_tag "Reset Url", data: { disable_with: "Please wait..." }, onclick:"if(confirm('This will disable any links you have previously sent')){callAjax('#{@url}','show-url');}", class: 'tiny button', type: 'button'%>
 
-	<% end %>
 
 	<div id='show-url'></div>
 
@@ -125,7 +121,7 @@ function handleMainImage(files) {
 		  <div class="content" id="pictures">
 		  	
 		    <ul id='pictures-container' class="clearing-thumbs" data-clearing>
-		    	<%=render partial: 'thumbnails', locals:{images: @loan.get_images, loan_id:@loan._id}%>
+		    	<%=render partial: 'thumbnails', locals:{images: @images, loan_id:@loan._id}%>
 		    </ul>
 			<div style='margin-top:30px;width:100%'>
 				<%= render partial: 'file_upload', locals:{contact_id:@loan._id, form_id:'image_upload', controller:'loans', action:'upload_image', multiple:'true', type:'full', button_label:'Add Pictures'}

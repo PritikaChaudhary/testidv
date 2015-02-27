@@ -6,8 +6,83 @@ class LoansController < ApplicationController
   def index
     authorize Loan
     @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
-
+    @loans.each do |loan|
+        dbLoan = Loan.find_by_id(loan['Id'])
+        if dbLoan.blank?
+          dbLoan = Loan.new()
+          dbLoan.id = loan['Id']
+          dbLoan.save
+        end
+    end
   end
+  
+  
+  
+  def temp
+    # @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
+    @loans = Loan.all
+    @output=Array.new
+    @loans.each do |loan|
+      loan.images.each do |temp|
+        temp.delete
+      end
+      image_keys = loan.get_s3_images
+      if !image_keys.blank?
+        if image_keys.first.is_a?(String)
+          @output<<image_keys
+          image_keys.each do |key|
+              check = Image.find_by_file_id(key)
+              file_name = key.gsub(loan.id.to_s+'/', '')
+              if !check.blank? && check.url.blank?
+                dbImage = check
+                dbImage.file_id = key_name
+                dbImage.name = file_name
+                dbImage.url = "https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{loan.id}/#{file_name}"
+                dbImage.src = ''
+                dbImage.data = ''
+              
+              else 
+                  dbImage = Image.new(
+                                :loan_id=>loan.id,
+                                :file_id=>key, 
+                                :name=>file_name, 
+                                :url=>"https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{loan.id}/#{file_name}"
+                                ) 
+              end  
+              dbImage.save           
+          end
+          
+          
+
+          
+          
+        end
+      end
+    end
+
+    # @loans.each do |loan|
+        # dbLoan = Loan.find_by_id(loan['Id'])
+        # if dbLoan.blank?
+          # dbLoan = Loan.new()
+          # dbLoan.id = loan['Id']
+          # dbLoan.save
+        # end
+        # dbLoan.images.each do |temp|
+          # if temp.url.blank?
+            # temp.delete
+          # end
+        # end
+        # @images = dbLoan.get_images
+#      
+    # end 
+    # temp = @loans.count 
+ 
+  end
+  
+  
+  
+  
+  
   
   def show
     @loan = Loan.find_by_url(params[:id].to_s)
@@ -17,7 +92,7 @@ class LoansController < ApplicationController
     end
 
 
-    if current_user.blank? && (@loan.url !=params[:id].to_s)
+    if @loan.blank? || (current_user.blank? && !@loan.url.blank? && (@loan.url !=params[:id].to_s))
       flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
       redirect_to '/'
     end
@@ -49,7 +124,7 @@ class LoansController < ApplicationController
       @loan.name=contact['_LoanName']
       @loan._id = contact['Id']
       @loan.info = contact
-      @images = @loan.get_images
+      @images = @loan.images
       @documents = @loan.get_docs
       @loan.save()
     
@@ -70,7 +145,7 @@ class LoansController < ApplicationController
         end
     end
       @loan.info =  contact 
-      @images = @loan.get_images
+      @images = @loan.images
       @documents = @loan.get_docs
       @loan.save()
     
@@ -243,41 +318,50 @@ class LoansController < ApplicationController
   def upload_main_image
    loan=Loan.find_by_id(params[:id].to_i)
    uploaded_io = params[:upload]
-    File.open(Rails.root.join('public', 'temp', uploaded_io.original_filename), 'wb') do |file|
+   file_name = uploaded_io.original_filename
+   
+    File.open(Rails.root.join('public', 'temp', file_name), 'wb') do |file|
       contents = uploaded_io.read
-      base64Contents = Base64.encode64(contents)
       file.write(contents)
-       
-       #check each image and see if it is already in infusionsoft
+      
+      
+      # Make an object in your bucket for your upload
+      key_name = loan.id.to_s+'/'+file_name
+      
+      obj = S3.put_object(
+               acl: "public-read",
+               bucket: S3_BUCKET_NAME,
+               key: key_name,
+               body: contents
+               )
+    
+       #clear all featured image tags
         @check = false
-        loan.get_images.each do |img|
-          fields = ['Id']
-             if img.featured 
+        loan.images.each do |img|
+              if img.featured 
               img.featured = false
               img.save()
              end
-
-          if uploaded_io.original_filename == img.name
-            @check = img
-            @check.featured = true
-            @check.save()  
-          end
         end
         
-        if @check==false
-          @isFile = Infusionsoft.file_upload(params[:id].to_i, uploaded_io.original_filename, base64Contents)
-            ext =  uploaded_io.original_filename.split('.').last.downcase 
-            image = Image.new(:loan_id=>loan._id, :file_id=>@isFile.to_i, :name=>uploaded_io.original_filename,:src=>"data:image/#{ext};base64",:data=>base64Contents);
+        if obj.last_page?
+            ext =  file_name.split('.').last.downcase 
+            check = Image.find_by_name(file_name)
+            if check && check.loan_id == loan.id
+              image = check
+            else
+              image = Image.new(:loan_id=>loan._id, :file_id=>key_name, :name=>file_name, :url=>"https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{loan.id}/#{file_name}");
+            end
             image.featured = true
             image.save()
          end   
       
     end
-    redirect_to action: 'view', id: params[:id]
-    #render plain: @isFile
-    #  render nothing: true
-
+    redirect_to action: 'show', id: params[:id]
   end
+
+
+
 
   def upload_image
    
@@ -287,26 +371,32 @@ class LoansController < ApplicationController
    output['files']=Array.new
    
    files.each do |file_io|
+     file_name=file_io.original_filename
+     
      File.open(Rails.root.join('public', 'temp', file_io.original_filename), 'wb') do |file|
         
       contents = file_io.read
-      base64Contents = Base64.encode64(contents)
-      file.write(contents)
-         output['files'].push({:name=>file_io.original_filename, :success=>'Upload was successful!'})
-          #check each image and see if it is already in infusionsoft
-          @check = false
-          loan.get_images.each do |img|
-            fields = ['Id']
-            if file_io.original_filename == img.name
-              @check = img
-            end
-          end
+      # Make an object in your bucket for your upload
+      key_name = loan.id.to_s+'/'+file_name
+      obj = S3.put_object(
+               acl: "public-read",
+               bucket: S3_BUCKET_NAME,
+               key: key_name,
+               body: contents
+               )
           
-          if @check==false
-            @isFile = Infusionsoft.file_upload(params[:id].to_i, file_io.original_filename, base64Contents)
-              ext =  file_io.original_filename.split('.').last.downcase 
-              image = Image.new(:loan_id=>loan._id, :file_id=>@isFile.to_i, :name=>file_io.original_filename,:src=>"data:image/#{ext};base64",:data=>base64Contents);
-              image.save()
+          if obj.last_page?
+            ext =  file_name.split('.').last.downcase 
+            check = Image.find_by_name(file_name)
+            if check && check.loan_id == loan.id
+              image = check
+            else
+              image = Image.new(:loan_id=>loan._id, :file_id=>key_name, :name=>file_name, :url=>"https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{loan.id}/#{file_name}");
+            end
+            image.featured = false
+            image.save()
+            output['files'].push({:name=>file_name, :success=>'Upload was successful!'})
+
           end    
        
      end 
@@ -315,15 +405,31 @@ class LoansController < ApplicationController
     return
   end
 
+
+
+
+
+
   def delete_image
-    img = Image.find_by_file_id(params[:id].to_i)
-      begin
-        Infusionsoft.file_replace(img.file_id.to_i, '')
-      rescue Exception
+    if params[:id]
+      img = Image.find_by__id(params[:id])
+        # begin
+          # Infusionsoft.file_replace(img.file_id.to_i, '')
+        # rescue Exception
+        # end
+      #remove from aws s3
+      if !img.blank?
+        S3.delete_object(
+          bucket: S3_BUCKET_NAME,
+          key: img.file_id.to_s,
+        )
+        
+        img.delete
       end
-    
-    img.delete
-    render plain: ''
+    end
+      
+      render plain: ''
+      
   end
 
 

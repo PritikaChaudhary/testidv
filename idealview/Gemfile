@@ -41,7 +41,7 @@ gem 'spring',        group: :development
 gem 'bson_ext'
 gem 'mongo_mapper', '>= 0.13.1' 
 gem 'sqlite3' # needed for initial start
-
+gem 'aws-sdk', '~> 2' #used for image storage
 
 #the authentication gem
 gem 'devise' 
@@ -55,6 +55,9 @@ gem 'foundation-rails', '5.4.5'
 
 #gem for adding breadcrumbs
 gem 'gretel'
+
+#gem for managing environment variables
+gem 'figaro'
 
 #development gems
 group :development, :test do 

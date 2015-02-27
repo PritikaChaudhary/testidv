@@ -9,16 +9,16 @@ defaults: &defaults
 
 development:
   <<: *defaults
-  database: fd_development
+  database: idealview_dev
 
 test:
   <<: *defaults
-  database: fd_test
+  database: idealview_test
   w: 0
 
 # set these environment variables on your prod server
 production:
   <<: *defaults
-  database: fundingdatabase
+  database: idealview
   username: <%= ENV['MONGO_USERNAME'] %>
   password: <%= ENV['MONGO_PASSWORD'] %>
