@@ -23,7 +23,6 @@ class LoanUrl
     if self.url.blank?
       self.url =  Digest::MD5.hexdigest('funding'+self.loan._id.to_s+Time.now.getutc.to_s)
       self.dateCreated = Time.now.getutc
-      self.disabled = false
       self.visits = Array.new
       self.emailed = false
     end
