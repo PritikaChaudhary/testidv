@@ -76,4 +76,8 @@ Rails.application.configure do
   #add moderniz from foundation to js assets
   config.assets.precompile += %w( vendor/modernizr.js )
   
+  #add domain for mailer
+  config.action_mailer.default_url_options = { :host => 'idealview.us' }
+
+  
 end
