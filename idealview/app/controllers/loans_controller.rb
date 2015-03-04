@@ -9,12 +9,23 @@ class LoansController < ApplicationController
     authorize Loan
     @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
     @loans.each do |loan|
+
+      if loan['_LoanName'].blank?
+        loan['_LoanName'] = 'Awesome Loan Name'
+      end 
+
         dbLoan = Loan.find_by_id(loan['Id'])
         if dbLoan.blank?
           dbLoan = Loan.new()
           dbLoan.id = loan['Id']
+          dbLoan.name=loan['_LoanName']
+          dbLoan.info = loan
           dbLoan.save
+        else
+            dbLoan.name=loan['_LoanName']
+            dbLoan.save
         end
+        
     end
   end
   
@@ -157,6 +168,7 @@ class LoansController < ApplicationController
         end
     end
       @loan.info =  contact 
+      @loan.name = contact['_LoanName']
       @images = @loan.images
       @documents = @loan.get_docs
       @loan.save()
