@@ -20,6 +20,7 @@ class User
   key :remember_created_at, String
   key :is_admin, Boolean
   key :reset_password_token
+  key :reset_password_sent_at
 
   attr_accessible :name,:email, :password, :password_confirmation, :remember_me, :encrypted_password, :roles
   
@@ -51,5 +52,6 @@ class User
   def self.valid_roles
     return ['Admin', 'Broker', 'Lender']
   end 
+  
   
 end
