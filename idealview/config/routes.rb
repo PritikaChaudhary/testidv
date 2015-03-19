@@ -46,6 +46,19 @@ Rails.application.routes.draw do
   patch "admin/edit_user/:id" => "admin#update_user", as: :admins_update_user
   delete "admin/destroy_user/:id" => "admin#destroy_user", as: :admins_destroy_user
 
+
+
+  #routes for api calls to handle links in emails and campaign requests
+  namespace :api do
+    #resources :actions
+    get '/match_lenders/:id/:token'=>'actions#match_lender'
+    get '/shop_loan/:id/:token'=>'actions#shop_loan'
+    get '/keep_loan/:id/:token'=>'actions#keep_loan'
+    get '/indicate_interest/:id/:token'=>'actions#indicate_interest'
+    get '/declined_interest/:id/:token'=>'actions#declined_interest'
+
+  end
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

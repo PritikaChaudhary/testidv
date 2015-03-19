@@ -561,7 +561,7 @@ class Loan
       :_TransactionType0,
       :_CashContribution,
       :_DesiredTermLength,
-      :_ExpectedCloseDate,
+      #:_ExpectedCloseDate,
       :_EstimatedMarketValue,
       :_LendingCategory,
     ]
