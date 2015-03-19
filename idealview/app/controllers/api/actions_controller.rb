@@ -137,7 +137,7 @@ class Api::ActionsController < ApplicationController
    fields = Loan::highlight_fields
    begin 
     @loan = Infusionsoft.data_load('Contact', loan_id, fields)
-    #Infusionsoft.contact_add_to_group(loan_id, 381) 
+    Infusionsoft.contact_add_to_group(loan_id, 381) 
     render plain: 'Success!'
     return
    rescue
