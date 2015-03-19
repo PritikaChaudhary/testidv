@@ -32,12 +32,16 @@
 			<%=loan['_LendingCategory']%>
 		<% end %>
 	</div>
+	<% if loan['_LenderEmail'].blank? %>
 	<% @shop_loan_id = 'shop-loan-'+loan['Id'].to_s %>
-    <div id='shop-loan<%=@shop_loan_id%>' class='large-1 columns'>
-            <% @url=url_for :controller=>'api/actions', :action=>'manual_shop_loan', :id=>loan['Id'], :token=>'54b0c58c7ce9f2a8b551351102ee0938'%>
+    <div id='<%=@shop_loan_id%>' class='large-1 columns'>
+            <% @url=url_for :controller=>'api/actions', :action=>'manual_shop_loan', :id=>loan['Id'], :token=>'54b0c58c7ce9f2a8b551351102ee0938', :only_path=>false%>
           <%= button_tag "Shop Loan", onclick:"if(confirm('Are you sure? This will start sending emails!')){callAjax('#{@url}','#{@shop_loan_id}');}", class: 'tiny button'%>
 
     </div>
+    <% end %>
+    
+    
 	<div class='hide'>
 		<div class='large-4 columns'>
 			<div class='label secondary'>Transaction Type</div><BR>
