@@ -1,5 +1,5 @@
 class Api::ActionsController < ApplicationController
-  #layout 'application'
+
   def match_lender
     #return blank if the token doesn't match
     if params[:token].blank? || params[:token] != 'ab2cb0605482e82e89765f641cdfa07b'
@@ -68,7 +68,8 @@ class Api::ActionsController < ApplicationController
     #use the first match if this is the first request for a lender match
     if loan['_LenderEmail'].blank? && loan['_NumberOfLendersShopped'].to_i<1
       lender = matches.first
-      update_data = {:_LenderEmail=>lender['email'], :_NumberOfLendersShopped=>1}
+      #lender['email']
+      update_data = {:_LenderEmail=>'ndavis@cacheprivatecapital.com', :_NumberOfLendersShopped=>1}
       Infusionsoft.contact_update(loan_id, update_data)
     else
     #use the next lender in the list if this is a subsequent request
@@ -93,7 +94,7 @@ class Api::ActionsController < ApplicationController
           end
         end
         x = loan['_NumberOfLendersShopped'].to_i+1
-        Infusionsoft.contact_update(loan_id, {:_LenderEmail=>lender['email'], :_NumberOfLendersShopped=>x})
+        Infusionsoft.contact_update(loan_id, {:_LenderEmail=>'ndavis@cacheprivatecapital.com', :_NumberOfLendersShopped=>x})
         render plain: lender
         return
       end
@@ -120,9 +121,33 @@ class Api::ActionsController < ApplicationController
    rescue
      @error = true
    end   
-   
-   
+
  end
+ 
+ 
+ 
+  def manual_shop_loan
+    #return blank if the token doesn't match
+    if params[:token].blank? || params[:token] != '54b0c58c7ce9f2a8b551351102ee0938'
+      @error = true
+      return
+    end
+    
+   loan_id = params[:id]
+   fields = Loan::highlight_fields
+   begin 
+    @loan = Infusionsoft.data_load('Contact', loan_id, fields)
+    #Infusionsoft.contact_add_to_group(loan_id, 381) 
+    render plain: 'Success!'
+    return
+   rescue
+     render plain: 'Error!'
+     return
+     #@error = true
+   end   
+    render plain: 'Not sure if it worked!'
+ end
+ 
  
  def keep_loan
     #return blank if the token doesn't match

@@ -56,6 +56,7 @@ Rails.application.routes.draw do
     get '/keep_loan/:id/:token'=>'actions#keep_loan'
     get '/indicate_interest/:id/:token'=>'actions#indicate_interest'
     get '/declined_interest/:id/:token'=>'actions#declined_interest'
+    get '/manual_shop_loan/:id/:token'=>'actions#manual_shop_loan'
 
   end
 
