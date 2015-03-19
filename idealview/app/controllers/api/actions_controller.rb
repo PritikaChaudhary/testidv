@@ -69,7 +69,7 @@ class Api::ActionsController < ApplicationController
     if loan['_LenderEmail'].blank? && loan['_NumberOfLendersShopped'].to_i<1
       lender = matches.first
       #lender['email']
-      update_data = {:_LenderEmail=>'ndavis@cacheprivatecapital.com', :_NumberOfLendersShopped=>1}
+      update_data = {:_LenderEmail=>lender['email'], :_NumberOfLendersShopped=>1}
       Infusionsoft.contact_update(loan_id, update_data)
     else
     #use the next lender in the list if this is a subsequent request
@@ -94,7 +94,7 @@ class Api::ActionsController < ApplicationController
           end
         end
         x = loan['_NumberOfLendersShopped'].to_i+1
-        Infusionsoft.contact_update(loan_id, {:_LenderEmail=>'ndavis@cacheprivatecapital.com', :_NumberOfLendersShopped=>x})
+        Infusionsoft.contact_update(loan_id, {:_LenderEmail=>lender['email'], :_NumberOfLendersShopped=>x})
         render plain: lender
         return
       end
