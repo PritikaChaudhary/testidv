@@ -11,9 +11,9 @@
 		loan_name = loan['_LoanName']
 	end
 	%>
-	<div class='large-3 columns'><h5><a href='<%=url_for :controller=>'loans', :action=>'show',:id=>loan['Id']%>'><%=loan_name%></a></h5></div>
-	<div class='large-3 columns'>
-		<span>Net Amount:</span>
+	<div class='large-2 columns'><h5><a href='<%=url_for :controller=>'loans', :action=>'show',:id=>loan['Id']%>'><%=loan_name%></a></h5></div>
+	<div class='large-2 columns'>
+		<span>Net Amount:</span><BR>
 		<% if loan['_NetLoanAmountRequested0'].blank? %>
 			N/A
 		<% else %>
@@ -32,14 +32,19 @@
 			<%=loan['_LendingCategory']%>
 		<% end %>
 	</div>
-	<% if loan['_LenderEmail'].blank? %>
-	<% @shop_loan_id = 'shop-loan-'+loan['Id'].to_s %>
-    <div id='<%=@shop_loan_id%>' class='large-1 columns'>
+    <div id='<%=@shop_loan_id%>' class='large-3 columns'>
+        <% if loan['_LenderEmail'].blank? %>
+        <% @shop_loan_id = 'shop-loan-'+loan['Id'].to_s %>
+
             <% @url=url_for :controller=>'api/actions', :action=>'manual_shop_loan', :id=>loan['Id'], :token=>'54b0c58c7ce9f2a8b551351102ee0938', :only_path=>false%>
           <%= button_tag "Shop Loan", onclick:"if(confirm('Are you sure? This will start sending emails!')){callAjax('#{@url}','#{@shop_loan_id}');}", class: 'tiny button'%>
+        <% end %>
+         <a class='tiny button alert' href="<%=url_for :controller=>'loans', :action=>'archive', :id=>loan['Id'], :only_path=>false%>">
+            Archive
+        </a>
 
     </div>
-    <% end %>
+  
     
     
 	<div class='hide'>

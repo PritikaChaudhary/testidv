@@ -8,7 +8,7 @@ class LoansController < ApplicationController
   def index
     authorize Loan
     @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
-    @loans.each do |loan|
+    @loans.each_with_index do |loan, i|
 
       if loan['_LoanName'].blank?
         loan['_LoanName'] = 'Awesome Loan Name'
@@ -25,8 +25,12 @@ class LoansController < ApplicationController
             dbLoan.name=loan['_LoanName']
             dbLoan.save
         end
-        
-    end
+        if dbLoan.archived
+          @loans.delete_at(i)
+        end
+     end
+     
+    
   end
   
   
@@ -585,6 +589,15 @@ class LoansController < ApplicationController
     end   
    
     render 'show' 
+  end
+  
+  
+  def archive
+    @loan = Loan.find_by_id(params[:id].to_i)
+    @loan.archived = true
+    @loan.save
+    Infusionsoft.contact_add_to_group(@loan.id, 282) 
+    redirect_to :action =>"index", :id=>@loan.id    
   end
 
 

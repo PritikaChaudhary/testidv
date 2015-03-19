@@ -13,6 +13,7 @@ class Loan
   key :allowed_emails, String
   key :url, String
   key :nda_signed, Boolean
+  key :archived, Boolean
   
   def address
     if !self.info['Address3Street1'].blank? && defined? self.info['City3'] && defined? self.info['State3'] && defined? self.info['PostalCode3']
