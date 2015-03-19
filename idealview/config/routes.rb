@@ -51,7 +51,7 @@ Rails.application.routes.draw do
   #routes for api calls to handle links in emails and campaign requests
   namespace :api do
     #resources :actions
-    get '/match_lenders/:id/:token'=>'actions#match_lender'
+    post '/match_lenders/:id/:token'=>'actions#match_lender'
     get '/shop_loan/:id/:token'=>'actions#shop_loan'
     get '/keep_loan/:id/:token'=>'actions#keep_loan'
     get '/indicate_interest/:id/:token'=>'actions#indicate_interest'
