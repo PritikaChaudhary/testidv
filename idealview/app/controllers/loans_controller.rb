@@ -581,7 +581,6 @@ class LoansController < ApplicationController
           nda.date = Time.now
           nda.save  
         end
-  
       end 
       @loan.nda_signed = true
     else
@@ -591,13 +590,15 @@ class LoansController < ApplicationController
     render 'show' 
   end
   
+ 
   
   def archive
     @loan = Loan.find_by_id(params[:id].to_i)
     @loan.archived = true
     @loan.save
     Infusionsoft.contact_add_to_group(@loan.id, 282) 
-    redirect_to :action =>"index", :id=>@loan.id    
+    render plain: 'Archived!'
+    #redirect_to :action =>"index", :id=>@loan.id    
   end
 
 

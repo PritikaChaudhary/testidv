@@ -22,7 +22,7 @@ Rails.application.routes.draw do
   get 'loans/view_doc/:id'=>'loans#view_doc'
   post 'loans/upload_doc/:id'=>'loans#upload_doc'
   post 'loans/update_amount_owed/:id'=>'loans#update_amount_owed'
-  get 'loans/archive/:id'=>'loans#archive'
+  post 'loans/archive/:id'=>'loans#archive'
 
 
   post 'loan_urls/:id'=>'loan_urls#destroy'
