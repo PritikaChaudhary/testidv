@@ -1,3 +1,13 @@
+    #############################################################################################
+    #
+    #     This controller defines actions that links in emails from infusionsoft use to control
+    #     the loan process. If you don't know what this means or don't understand where every detail is
+    #     don't touch this file. You will break the process.
+    #
+    #############################################################################################
+
+
+
 class Api::ActionsController < ApplicationController
 
   def match_lender
