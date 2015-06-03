@@ -12,6 +12,8 @@ class Loan
   key :published, Boolean
   key :allowed_emails, String
   key :url, String
+  key :doc_url, String
+  key :url_time, Date
   key :nda_signed, Boolean
   key :archived, Boolean
   

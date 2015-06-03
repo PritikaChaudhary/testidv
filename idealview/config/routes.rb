@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   get 'loans/:id'=>'loans#show'
   get 'loans'=>'loans#index'
   post 'loans/edit_field/:id/:field'=>'loans#edit_field'
+  get 'loans/docs/:id'=>'loans#docs'
   post 'loans/:id/edit_category'=>'loans#edit_category'
   post 'loans/edit_loan_type'=>'loans#edit_loan_type'
   post 'loans/images/:id'=>'loans#images'
@@ -27,7 +28,8 @@ Rails.application.routes.draw do
 
   post 'loan_urls/:id'=>'loan_urls#destroy'
   post 'loan_urls/:id/email_link'=>'loan_urls#email_link'
-
+  post 'loan_urls/:id/generate_url'=>'loan_urls#generate_url'
+  post 'loan_urls/:id/extend_date'=>'loan_urls#extend_date'
   #post 'loans/get_url/:id'=>'loans#get_url'
   #post 'loans/reset_url/:id'=>'loans#reset_url'
   #get 'loans/reset_url/:id'=>'loans#reset_url'

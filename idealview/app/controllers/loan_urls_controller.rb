@@ -56,5 +56,34 @@ class LoanUrlsController < ApplicationController
          render partial: 'loans/loan_url_form'   
   end
 
+   def generate_url
+      @loan = Loan.find_by_id(params[:id].to_i)
+      id = @loan.id
+      l_id = "#{id}" 
+      enc= Base64.encode64(l_id)
+      enc2 = Base64.encode64(enc)
+      if @loan
+       @loan.doc_url = enc2
+       @loan.url_time = Time.now.getutc
+       @loan.save
+       flash.now[:notice] = "Link has been generated."
+      end 
+        render partial: 'loans/loan_url_form'   
+   end
+
+   
+   def extend_date
+     @loan = Loan.find_by_id(params[:id].to_i)
+     if @loan
+      time = @loan.url_time
+      next_month = Time.utc(time.year, time.month+1, time.day)
+      @loan.url_time = next_month
+      @loan.save
+      flash.now[:notice] = "Validity date has been extended."
+     end
+     render partial: 'loans/loan_url_form'
+   end
+
+  
 
 end

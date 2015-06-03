@@ -8,13 +8,14 @@ class LoansController < ApplicationController
   def index
     authorize Loan
     @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
+    #@loans=@lo_ans.reverse
     @loans.each_with_index do |loan, i|
-
+ 
       if loan['_LoanName'].blank?
         loan['_LoanName'] = 'Awesome Loan Name'
       end 
 
-        dbLoan = Loan.find_by_id(loan['Id'])
+        dbLoan = Loan.find_by_id(loan['Id'])  
         if dbLoan.blank?
           dbLoan = Loan.new()
           dbLoan.id = loan['Id']
@@ -29,8 +30,6 @@ class LoansController < ApplicationController
           @loans.delete_at(i)
         end
      end
-     
-    
   end
   
   
@@ -96,13 +95,11 @@ class LoansController < ApplicationController
  
   end
   
-  
-  
-  
-  
-  
   def show
+
     loan_url = LoanUrl.find_by_url(params[:id])
+
+   
     if loan_url
       @loan = loan_url.loan
       if loan_url.visits.blank?
@@ -112,7 +109,10 @@ class LoansController < ApplicationController
       loan_url.save
       
     end
-    
+     
+
+
+
     if @loan.blank? && !current_user.blank?
       @loan = Loan.find_by_id(params[:id].to_i)
     end
@@ -124,8 +124,7 @@ class LoansController < ApplicationController
       return
     end
 
-    
-    dateField = ['_ExpectedCloseDate', '_AppraisalDate', 'Birthday', 'DateCreated', 'LastUpdated']
+   dateField = ['_ExpectedCloseDate', '_AppraisalDate', 'Birthday', 'DateCreated', 'LastUpdated']
 
     if @loan.blank?
       begin
@@ -187,6 +186,7 @@ class LoansController < ApplicationController
  
   def edit_field
     if policy(Loan).update?
+      
 
       @temp = params
       @field = params[:field]
@@ -600,6 +600,162 @@ class LoansController < ApplicationController
     render plain: 'Archived!'
     #redirect_to :action =>"index", :id=>@loan.id    
   end
+
+  def docs
+    id = Base64.decode64(Base64.decode64(params[:id])) 
+    loan_url = Loan.find_by_id(id.to_i)
+
+
+    if loan_url
+      @loan = loan_url
+    end
+
+    time = @loan.url_time
+    next_month = Time.utc(time.year, time.month+1, time.day) 
+    endDate = next_month.strftime('%Y-%m-%d')
+    
+    today = Time.now.getutc
+    todayDate = today.strftime('%Y-%m-%d')
+    
+    if endDate < todayDate
+        flash[:alert] ='Page has been expired.'
+        redirect_to '/'
+        return;    
+    end
+
+ 
+    if @loan.blank? 
+      @loan = Loan.find_by_id(params[:id].to_i)
+    end
+
+   dateField = ['_ExpectedCloseDate', '_AppraisalDate', 'Birthday', 'DateCreated', 'LastUpdated']
+
+    if @loan.blank?
+     
+      begin
+        contact = Infusionsoft.data_load('Contact', params[:id], Loan.all_fields)
+      rescue Exception
+        flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
+        redirect_to '/'
+        return;
+      end
+        
+      if contact['_LoanName'].blank?
+        contact['_LoanName'] = 'Your Awesome Loan Name Here'
+      end 
+      
+      dateField.each do |field|
+        temp = contact[field]
+        if !temp.blank?
+          contact[field]=temp.year.to_s+'-'+temp.month.to_s+'-'+temp.day.to_s
+        end
+      end
+
+      @loan = Loan.new
+      @loan.name=contact['_LoanName']
+      @loan._id = contact['Id']
+      @loan.info = contact
+      @images = @loan.images
+      @documents = @loan.get_docs
+      @loan.save()
+    
+    else
+      begin
+        contact = Infusionsoft.data_load('Contact', @loan._id, Loan.all_fields)
+
+      rescue Exception
+        flash[:alert] ='You selected an invalid loan.'
+        redirect_to '/'
+        return;
+      end
+      
+      dateField.each do |field|
+        temp = contact[field]
+       if !temp.blank?
+          contact[field]=temp.year.to_s+'-'+temp.month.to_s+'-'+temp.day.to_s
+        end
+    end
+      @loan.info =  contact 
+      @loan.name = contact['_LoanName']
+      @images = @loan.images
+      @documents = @loan.get_docs
+      @loan.save()
+    
+    end
+   
+     # render plain: @loan.info
+    # return     
+
+  end
+
+ def recent
+   @all_loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
+    @loans=@all_loans.reverse
+    @loans.each_with_index do |loan, i|
+ 
+      if loan['_LoanName'].blank?
+        loan['_LoanName'] = 'Awesome Loan Name'
+      end 
+
+        dbLoan = Loan.find_by_id(loan['Id'])  
+        if dbLoan.blank?
+          dbLoan = Loan.new()
+          dbLoan.id = loan['Id']
+          dbLoan.name=loan['_LoanName']
+          dbLoan.info = loan
+          dbLoan.save
+        else
+            dbLoan.name=loan['_LoanName']
+            dbLoan.save
+        end
+        if dbLoan.archived
+          @loans.delete_at(i)
+        end
+     end
+     flash.now[:notice] = "Recent Loans"
+     render partial: 'loans/all_loans'
+  end
+
+  def priority
+    @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
+    @loans.each_with_index do |loan, i|
+ 
+      if loan['_LoanName'].blank?
+        loan['_LoanName'] = 'Awesome Loan Name'
+      end 
+
+        dbLoan = Loan.find_by_id(loan['Id'])  
+        if dbLoan.blank?
+          dbLoan = Loan.new()
+          dbLoan.id = loan['Id']
+          dbLoan.name=loan['_LoanName']
+          dbLoan.info = loan
+          dbLoan.save
+        else
+            dbLoan.name=loan['_LoanName']
+            dbLoan.save
+        end
+        if dbLoan.archived
+          @loans.delete_at(i)
+        end
+     end
+     flash.now[:notice] = "Recent Loans"
+     render partial: 'loans/sort_loans'
+  end
+
+  def changeorder
+    @loan_ids=params[:moredata].split(",").map { |s| s.to_i }
+    x=1
+    @loan_ids.each do |number|
+      loanRecord.clear
+      loanRecord=Loan.new()
+      loanRecord.id=number
+      loanRecord.order_id=x
+      loanRecord.save
+       x += 1  
+    end
+      render nothing: true
+ end
 
 
 end
