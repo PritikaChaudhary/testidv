@@ -3,9 +3,6 @@ class LendersController < ApplicationController
   include ActionView::Helpers::NumberHelper
   require 'date'
 
-
-
-
   def index_m
     
     @infusion_lenders = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Lender'},Lender.highlight_fields)
