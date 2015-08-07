@@ -8,6 +8,8 @@ class AdminController < ApplicationController
 
 
  def new_user
+   #string = (0...8).map { (65 + rand(26)).chr }.join
+   #abort("#{string}")
    @user = User.new
    authorize @user
  end
@@ -20,6 +22,18 @@ class AdminController < ApplicationController
  
  
  def create_user
+    #abort("#{params[:user]}")
+    user_info=params[:user] 
+    roles=params[:roles]
+    unless roles['Broker'].blank?
+      broker = Broker.new
+      broker.name = user_info['name']
+      broker.email = user_info['email']
+      broker.password = user_info['password']
+      broker.save
+      broker_id=broker.id
+    end
+    #abort("#{params}")
     @user = User.new(params[:user])
     authorize @user
     
@@ -32,6 +46,10 @@ class AdminController < ApplicationController
       end
     end
     @user.roles = @roles
+
+    unless broker_id.blank?
+      @user.broker_id = broker_id
+    end
     
     if @user.save :safe => true
      flash[:notice] = @user.email + " Created Successfully"
@@ -80,6 +98,13 @@ class AdminController < ApplicationController
  def destroy_user
 
   @user = User.find(params[:id])
+
+  unless @user.broker_id.blank?
+    @broker=Broker.find(@user.broker_id)
+    @broker.delete=1
+    @broker.save
+  end
+
   authorize @user
   if @user.destroy
       flash[:notice] = @user.email + " Removed Successfully"

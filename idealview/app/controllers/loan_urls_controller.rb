@@ -60,7 +60,7 @@ class LoanUrlsController < ApplicationController
       @loan = Loan.find_by_id(params[:id].to_i)
       id = @loan.id
       l_id = "#{id}" 
-      enc= Base64.encode64(l_id)
+      enc = Base64.encode64(l_id)
       enc2 = Base64.encode64(enc)
       if @loan
        @loan.doc_url = enc2
@@ -84,6 +84,17 @@ class LoanUrlsController < ApplicationController
      render partial: 'loans/loan_url_form'
    end
 
-  
+  def save_status
+    lender=LoanUrl.find(params[:id])
+    lender.status=params[:status]
+    lender.save
+    render nothing: true
+  end
+
+  def fetch_lenders
+    @lenders =Loan.find_by_id(params[:id].to_i)
+    render partial: 'loans/lender_records'
+
+  end
 
 end

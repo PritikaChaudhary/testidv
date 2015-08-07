@@ -1,0 +1,117 @@
+<style type="text/css">
+	.same_line
+	{
+		float: left;
+    	width: 48%;
+	}
+	.same_lines
+	{
+		float: left;
+    	margin-left: 23px;
+    	width: 48%;
+	}
+	.field
+	{
+		width:100%;
+		float: left;
+	}
+	#ui-datepicker-div
+	{
+		z-index: 99 !important;
+		background: none repeat scroll 0 0 #808080;
+	}
+	table
+	{
+		 border: 1px solid #000000;
+   		 margin-bottom: 0.25rem;
+	}
+	.ui-datepicker-next
+	{
+		margin-left: 8px;
+		color: #000000;
+	}
+	.ui-datepicker-prev
+	{
+		margin-left: 3px;
+		color: #000000;
+	}
+	.ui-datepicker-title
+	{
+		margin-left: 3px;
+	}
+	.actions
+	{
+		margin-top:14px;
+	}
+	h3
+	{
+		text-align: center;
+	}
+</style>
+<script type="text/javascript">
+	
+</script>
+<div class='row'>
+	<div class="small-8 small-centered columns">
+
+		<h3>Edit User</h3>
+		  <form method="post" action="http://localhost:3000/brokers/edit_broker" id="brokerForm">
+		  
+		  <div class="field">
+				<label for="name">First Name</label>
+				<br>
+				<input id="name" type="text" name="firstName" autofocus="autofocus" value="<%= @broker.firstName %>" >
+				<input type="hidden" name="broker_id" value="<%= @broker.id %>">
+		  </div>
+
+		  <div class="field">
+				<label for="name">Last Name</label>
+				<br>
+				<input id="name" type="text" name="lastName" autofocus="autofocus" value="<%= @broker.lastName %>" >
+		  </div>
+
+		   <div class="field">
+			<label for="phone1">Phone</label>
+			<br>
+			<input id="phone1" type="text" name="phone1" autofocus="autofocus" value="<%= @broker.phone1 %>">
+		 </div>
+		 <div class="field">
+			<label for="email">Email</label>
+				<br>
+				<input id="email" type="text" readonly="" name="email" autofocus="autofocus" value="<%= @broker.email %>">
+		</div>
+		<div class="field">
+			 <label for="password">Change Password</label>
+				<br>
+				<input id="password" type="password" name="password" autofocus="autofocus">
+		</div>
+		<% 
+		  unless @broker.permissions.blank?
+			permission = @broker.permissions.split(",") 
+		  end
+		 %>
+		<div class="field">
+			<label for="permissions">Permission</label>
+			<br>
+			<input type="checkbox" <% if defined? permission
+				if permission.include? 'add_users' %>
+			   		checked = "checked"
+			   <% end
+			end %> value="add_users" name="permissions[]"><label>Ability to add more users</label>
+			<input type="checkbox" <% if defined? permission
+				if permission.include? 'change_passwords' %>
+			   		checked = "checked"
+			   <% end
+			end %> value="change_passwords" name="permissions[]"><label>Ability to change passwords</label>
+		</div>
+
+		<input type="hidden" name="user_id" value="<%= current_user.id %>">
+		<input type="hidden" name="user_email" value="<%= current_user.email %>">
+	
+		 
+		<div class="actions">
+		   <input type="submit" value="SUBMIT" class="tiny button success" >
+		  </div>
+		  </form>
+	</div>
+</div>

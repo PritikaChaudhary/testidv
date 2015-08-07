@@ -16,6 +16,12 @@ class Loan
   key :url_time, Date
   key :nda_signed, Boolean
   key :archived, Boolean
+  key :delete, Integer
+  key :sort_id, Integer
+  key :email, String
+  key :created_date, String
+  key :completed, Integer
+  key :incomplete, Integer
   
   def address
     if !self.info['Address3Street1'].blank? && defined? self.info['City3'] && defined? self.info['State3'] && defined? self.info['PostalCode3']
@@ -26,27 +32,28 @@ class Loan
   end
 
   
-  def category
-   temp =  Infusionsoft.data_load('Contact', self._id, [:_LendingCategory])
-   return temp['_LendingCategory']
-  end
+  #def category
+   #temp =  Infusionsoft.data_load('Contact', self._id, [:_LendingCategory])
+   #abort("#{temp.inspect}")
+   #return temp['_LendingCategory']
+  #end
 
-  def loan_type
-    case self.category
-    when 'Private Real Estate Loan'
-      temp = Infusionsoft.data_load('Contact', self._id, [:_LendingTypes])
-      return temp['_LendingTypes']
-    when 'Business Financing'
-      temp = Infusionsoft.data_load('Contact', self._id, [:_BusinessFinancingTypes])
-      return temp['_BusinessFinancingTypes']
-    when 'Equity and Crowdfunding'
-      temp = Infusionsoft.data_load('Contact', self._id, [:_EquityandCrowdFunding])
-      return temp['_EquityandCrowdFunding']
-    when 'Residential or Commercial Mortgage'
-      temp = Infusionsoft.data_load('Contact', self._id, [:_MortageTypes])
-      return temp['_MortageTypes']
-    end
-  end  
+  #def loan_type
+   # case self.category
+   # when 'Private Real Estate Loan'
+    #  temp = Infusionsoft.data_load('Contact', self._id, [:_LendingTypes])
+     # return temp['_LendingTypes']
+    #when 'Business Financing'
+     # temp = Infusionsoft.data_load('Contact', self._id, [:_BusinessFinancingTypes])
+     # return temp['_BusinessFinancingTypes']
+    #when 'Equity and Crowdfunding'
+     # temp = Infusionsoft.data_load('Contact', self._id, [:_EquityandCrowdFunding])
+      #return temp['_EquityandCrowdFunding']
+    #when 'Residential or Commercial Mortgage'
+     # temp = Infusionsoft.data_load('Contact', self._id, [:_MortageTypes])
+      #return temp['_MortageTypes']
+    #end
+  #end  
   
   #grab the featured image to display on the overview page
   def featured_image
@@ -85,46 +92,8 @@ class Loan
   
   def get_images
     fields = ['ContactId', 'Extension','FileName','Id','Public']
-    files = Infusionsoft.data_find_by_field('FileBox',1000,0,'ContactId', self._id, fields)
-    if !files.blank? and (files.is_a?(Array) or files.is_a?(Hash))
-      files.each do |file|
-        ext = file['Extension'].downcase
-        if ext =='png' || ext =='jpg' || ext =='jpeg' || ext =='gif'
-              file_name = file['FileName']
-              key_name = self.id.to_s+'/'+file_name
-               
-          
-          check = Image.find_by_name_and_loan_id(file['FileName'], self.id)
-          if !check.blank? && check.url.blank?
-            dbImage = check
-            dbImage.file_id = key_name
-            dbImage.name = file_name
-            dbImage.url = "https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{self.id}/#{file_name}"
-          
-          else 
-              dbImage = Image.new(
-                            :loan_id=>self.id,
-                            :file_id=>key_name, 
-                            :name=>file_name, 
-                            :url=>"https://s3-us-west-2.amazonaws.com/#{S3_BUCKET_NAME}/#{self.id}/#{file_name}"
-                            ) 
-          end           
-          
-          image = Infusionsoft.file_get(file['Id'])
-          if !image.blank?
-              obj = S3.put_object(
-                acl: "public-read",
-                bucket: S3_BUCKET_NAME,
-                key: key_name,
-                body: Base64.decode64(image) 
-               )
-               dbImage.save
-          end
-       end
-      end
-    end
+   # files = Infusionsoft.data_find_by_field('FileBox',1000,0,'ContactId', self._id, fields)
     return self.images
-
   end
   
   
@@ -145,31 +114,23 @@ class Loan
 
   def get_docs
     fields = ['ContactId', 'Extension','FileName','Id','Public']
-    files = Infusionsoft.data_find_by_field('FileBox',1000,0,'ContactId', self._id, fields)
+    #files = Infusionsoft.data_find_by_field('FileBox',1000,0,'ContactId', self._id, fields)
 
-    if !files.blank? and (files.is_a?(Array) or files.is_a?(Hash))
-      files.each_with_index do |file, index|
-        ext = file['Extension'].downcase
-        if ext !='png' && ext !='jpg' && ext !='jpeg' && ext !='gif'
-  
-          check = Document.find_by_file_id(file['Id'])
-          if check.blank?
-              newDoc = Document.new(:loan_id=>self._id,:file_id=>file['Id'], :name=>file['FileName']);
-              newDoc.save()
-          end
-        end
-      end
-    end
-    
+      
+    #abort("#{files.inspect}")
     #remove docs from the database that have been removed from IS
     docs = self.documents
+
     docs.each_with_index do |doc, index|
       is_doc = false
-      files.each do |file|
+      if defined? files.blank?
+         files.each do |file|
           if doc.file_id == file['Id'].to_i
             is_doc = true
           end
+        end   
       end
+     
       if !is_doc
          doc.delete
          #docs.delete_at(docs.index(index))
@@ -566,7 +527,7 @@ class Loan
       :_DesiredTermLength,
       #:_ExpectedCloseDate,
       :_EstimatedMarketValue,
-      :_LendingCategory,
+      :_LendingCategory
     ]
     self.person_fields | temp
   end

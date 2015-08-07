@@ -1,0 +1,180 @@
+<script>
+function handleMainImage(files) {
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var imageType = /image.*/;
+    
+    if (!file.type.match(imageType)) {
+      continue;
+    }
+    
+    var img = document.createElement("img");
+    img.classList.add("obj");
+    img.file = file;
+    mainDiv = document.getElementById("main_image_preview");
+    mainDiv.innerHTML = '';
+    
+    mainDiv.appendChild(img); // Assuming that "preview" is a the div output where the content will be displayed.
+    
+    var reader = new FileReader();
+    reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
+    reader.readAsDataURL(file);
+  }
+}
+
+function hide_file(id)
+{
+	if(confirm('Are you sure? You want to hide this file')){
+		var data = "&id=" + id;
+		$.ajax({
+	            data: data,
+	            type: 'POST',
+	            url: '/loans/hide_file',
+	            success:function(response){
+	            	$('#showfor_'+id).show();
+	            	$('#hidefor_'+id).hide();
+	           }
+	        });
+	}
+}
+
+function show_file(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/show_file',
+            success:function(response){
+            	$('#hidefor_'+id).show();
+	            $('#showfor_'+id).hide();
+        	}
+        });
+}
+
+function del_file(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/del_file',
+            success:function(response){
+           		$('#del_'+id).hide();
+        	}
+        });
+}
+
+</script>
+<div class='row'>
+<h1 class='text-left loan-heading'>
+		<%temp_name = '_LoanName'%>
+		<span id='<%=temp_name%>'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'text_field_tag', 
+					field_label: '', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:'',
+				} %>
+		</span>
+
+</h1>
+</div>
+
+<% if policy(@loan).update? %>
+<div id='show-urls' style='padding-left:50px;padding-right:50px;'>
+	<%= render partial: 'loan_url_form'%>
+</div>
+
+<% end %>
+
+
+
+<div class='row'>
+
+	<div class='large-3 columns'>
+		<h3 class='text-center'>
+			Highlights
+		</h3>
+		<div class='medium-only-text-center small-only-text-center'>
+		    	<%=render partial: 'highlights'%>
+		  </div>
+	
+	</div>
+
+
+	<div class="large-9  columns">
+		<dl class="tabs" data-tab>
+		  <dd class="active"><a href="#overview">Overview</a></dd>
+		  <dd><a href="#borrower">Borrower</a></dd>
+		  <dd><a href="#collateral" onclick='get_property_map();'>Collateral</a></dd>
+		   <dd><a href="#exit-strategy">Exit Strategy</a></dd>
+		  <dd><a href="#pictures">Pictures</a></dd>
+		  <dd><a href="#documents">Documents</a></dd>
+		</dl>
+		<div class="tabs-content">
+		  <div class="content active" id="overview">
+			
+				<%= render partial: 'overview' %>
+		     
+		  </div>
+		  <div class="content" id="borrower">
+		  	
+				<%= render partial: 'borrower' %>
+		
+		  </div>
+		  
+		  <div class="content" id="collateral">
+		   	
+		    	<%=render partial: 'collateral'%>
+	
+		    
+		  </div>
+		  
+		  
+		  
+		  
+		  <div class="content" id="pictures">
+		  	
+		    <ul id='pictures-container' class="clearing-thumbs" data-clearing>
+		    	<%=render partial: 'thumbnails', locals:{images: @images, loan_id:@loan._id}%>
+		    </ul>
+			<div style='margin-top:30px;width:100%'>
+				<%= render partial: 'file_upload', locals:{contact_id:@loan._id, form_id:'image_upload', controller:'loans', action:'upload_image', multiple:'true', type:'full', button_label:'Add Pictures'}
+				%>
+			</div>	
+		    
+		  </div>
+		  
+
+		  <div class="content" id="exit-strategy">
+		    <%=render partial: 'exitstrategy'%>
+		  </div>
+		  
+		  
+		  <div class="content" id="documents">
+
+		    	<%=render partial: 'documents'%>
+
+		  </div>
+		</div>
+		
+		
+		
+
+		
+		
+		
+	</div>
+
+
+
+
+	
+	
+</div>

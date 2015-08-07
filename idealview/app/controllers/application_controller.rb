@@ -17,8 +17,9 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.for(:sign_up) { |u| u.permit({ roles: [] }, :email, :password, :password_confirmation) }
 
   end
-  
+  before_filter :check_admin
   helper_method :app_name
+
   private
     def app_name
       Rails.application.class.to_s.split("::").first
@@ -27,6 +28,22 @@ class ApplicationController < ActionController::Base
     def user_not_authorized
       flash[:alert] = "You are not authorized to perform this action."
       redirect_to(request.referrer || root_path)
+    end
+
+    def check_admin
+       if !current_user.blank?
+        roles=current_user.roles
+        @names = Array.new
+        roles.each do |role|
+          @names << role.name
+        end
+        checkAdmin = @names.include?('Admin') 
+        checkBroker = @names.include?('Broker')
+      end
+
+      if checkBroker==true
+          @infoBroker = Broker.find_by_email(current_user.email)
+      end
     end
 
   

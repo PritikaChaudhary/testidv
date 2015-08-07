@@ -1,0 +1,232 @@
+<% if defined? @loan.address && @loan.address!= 'None' %>
+<script>
+function get_property_map(){
+             
+	if($('#property-map').html().length==0){
+
+	    var embed = '<iframe'+
+					' width="600"'+
+					' height="450"'+
+					' frameborder="0" style="border:0"'+
+					' src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDWe2ZhHLQauBtuujbDpPKtZAG0QP5XeyA&q=<%=@loan.address%>&zoom=15">'+
+			'</iframe>';
+	
+	
+		$('#property-map').html(embed);
+	}
+}
+</script>
+<% end %>
+<div class='row bottom-space'>
+<div class='panel small-12'>
+
+		<% temp_name = 'Address3Street1' %>
+		<span id='<%=temp_name%>'  >
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'text_field_tag', 
+					field_label: 'Address', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</span>
+
+		<%temp_name = 'City3'%>
+		<span id='<%=temp_name%>' class='left'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'text_field_tag', 
+					field_label: '', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</span><span class='left'>,&nbsp;&nbsp;</span>
+		<%temp_name = 'State3'%>
+		<span id='<%=temp_name%>'  class='left'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'select_tag', 
+					field_label: '', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:'Loan.states'
+				} %>
+		</span><span class='left'>&nbsp;&nbsp;&nbsp;</span>
+		<%temp_name = 'PostalCode3'%>
+		<span id='<%=temp_name%>'  class='left'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'text_field_tag', 
+					field_label: '', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</span>
+
+<BR>
+
+
+</div>	
+
+	
+
+<div class='row bottom-space'>
+		<%temp_name = '_EstimatedMarketValue'%>
+		<div id='<%=temp_name%>' class='medium-4 columns'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_money',
+					field_type: 'text_field_tag', 
+					field_label: 'Estimated Property Value', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</div>
+
+
+
+
+
+
+
+
+
+		<%temp_name = '_AmountOwed'%>
+		<div id='<%=temp_name%>' class='medium-4 columns'>
+			<% 
+			amount = 0
+			if @loan.info['_FreeandClear0'] !=1
+				amount = @loan.info[temp_name]
+			end
+			@loan.info[temp_name]=amount
+			%>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_money',
+					field_type: 'text_field_tag', 
+					field_label: 'Amount Owed', 
+					field_name: temp_name,
+					field_value: amount,
+					field_options:''
+				} %>
+
+		</div>
+		
+		
+				
+		<%temp_name = '_FreeandClear0'%>
+		<div id='<%=temp_name%>' class='medium-4 columns'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_text',
+					field_type: 'select_tag', 
+					field_label: 'Mortgage Status', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:'Loan.paid_options'
+				} %>
+
+		</div>	
+		
+		
+		
+</div>
+
+
+<div class='row bottom-space'>
+		<%temp_name = '_HowmuchGrossMonthlyIncome'%>
+		<div id='<%=temp_name%>' class='medium-4  columns'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_money',
+					field_type: 'text_field_tag', 
+					field_label: 'Gross Monthly Income', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</div>
+
+		<%temp_name = '_PurchasePrice'%>
+		<div id='<%=temp_name%>' class='medium-4   columns'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_money',
+					field_type: 'text_field_tag', 
+					field_label: 'Purchase Price', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</div>
+		
+		
+		
+		<%temp_name = '_OriginalPurchasePriceifitsarefinance'%>
+		<% if (@loan.info['_TransactionType0'] =='Refinance' || @loan.info['_TransactionType0']=='Both')%>
+		<div id='<%=temp_name%>' class='medium-4  columns'>
+			<%= render partial: 'mini_form', locals:
+				{
+					edit: false,
+					contact_id:@loan['_id'],
+					format_type:'fd_money',
+					field_type: 'text_field_tag', 
+					field_label: 'Original Purchase Price', 
+					field_name:temp_name,
+					field_value:@loan.info[temp_name],
+					field_options:''
+				} %>
+		</div>
+		<% end %>
+</div>		
+	
+		
+
+		
+	
+	
+</div>
+
+<div class='row'>
+				<%temp_name = '_AdditionalCollateralWhatelsecanyouofferassecurity0'%>
+				<div id='<%=temp_name%>'>
+					<%= render partial: 'mini_form', locals:
+						{
+							edit: false,
+							contact_id:@loan['_id'],
+							format_type:'simple_format',
+							field_type: 'text_area_tag', 
+							field_label: 'Additional Collateral', 
+							field_name: temp_name,
+							field_value:@loan.info[temp_name],
+							field_options:'',
+						} %>
+				</div>
+</div>
+<div id='property-map' class="flex-video"></div>

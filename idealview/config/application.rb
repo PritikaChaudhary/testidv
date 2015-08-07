@@ -9,10 +9,18 @@ require "action_mailer/railtie"
 require "action_view/railtie"
 require "sprockets/railtie"
 require "rails/test_unit/railtie"
+# require 'pdfkit'
+  
+# config.middleware.use PDFKit::Middleware
+#config.threadsafe!
 
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
+
+ENV['INFUSIONSOFT_URL'] = "tb173.infusionsoft.com"
+ENV['INFUSIONSOFT_KEY'] = "f65f9f22eb0af1fb5544f6ced683aeaf"
+
 Bundler.require(*Rails.groups)
 
 module FundingDatabase
@@ -45,5 +53,7 @@ module FundingDatabase
     
   end
 end
+
+
 
 

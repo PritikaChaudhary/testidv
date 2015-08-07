@@ -9,7 +9,7 @@ class LoanPolicy < ApplicationPolicy
   end
  
   def update?
-    user && user.role?(:Admin)  || false
+    user && user.role?(:Broker)  || false
   end
   
   def show?

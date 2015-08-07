@@ -21,6 +21,195 @@ function handleMainImage(files) {
     reader.readAsDataURL(file);
   }
 }
+
+function hide_file(id)
+{
+	if(confirm('Are you sure? You want to hide this file')){
+		var data = "&id=" + id;
+		$.ajax({
+	            data: data,
+	            type: 'POST',
+	            url: '/loans/hide_file',
+	            success:function(response){
+	            	$('#showfor_'+id).show();
+	            	$('#hidefor_'+id).hide();
+	           }
+	        });
+	}
+}
+
+function hide_doc(id)
+{
+	if(confirm('Are you sure? You want to hide this file')){
+		var data = "&id=" + id;
+		$.ajax({
+	            data: data,
+	            type: 'POST',
+	            url: '/loans/hide_doc',
+	            success:function(response){
+	            	$('#showfile_'+id).show();
+	            	$('#hidefile_'+id).hide();
+	           }
+	        });
+	}
+}
+
+function show_file(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/show_file',
+            success:function(response){
+            	$('#hidefor_'+id).show();
+	            $('#showfor_'+id).hide();
+        	}
+        });
+}
+
+function show_doc(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/show_doc',
+            success:function(response){
+            	$('#hidefile_'+id).show();
+	            $('#showfile_'+id).hide();
+        	}
+        });
+}
+
+function del_file(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/del_file',
+            success:function(response){
+           		$('#del_'+id).hide();
+        	}
+        });
+}
+
+function del_doc(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/del_doc',
+            success:function(response){
+           		$('#del_file'+id).hide();
+        	}
+        });
+}
+
+function del_folder(id)
+{
+	var data = "&id=" + id;
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/del_folder',
+            success:function(response){
+           		$('#folder_'+id).hide();
+        	}
+        });
+}
+
+
+$('document').ready(function(){
+	$( ".lender_status" ).change(function() {
+		var status=$(this).val();
+		var id=$(this).attr('id');
+		var lender_id=id.replace('lender','');
+		var data = "&status=" +status
+		$.ajax({
+			data: data,
+			type: 'POST',
+            url: '/loan_urls/'+lender_id+'/save_status',
+             success:function(response){
+           		$('#del_'+id).hide();
+        	}
+        }) ;
+	});
+
+	$("#add_custom_folder").click(function(){
+		$(".add_new_folder").slideToggle();		
+	});
+
+	$("#cancel_add_folder").click(function(){
+		$(".add_new_folder").hide();
+		$(".folder_name").val("")
+	});
+
+	$("#add_folder").click(function(){
+		var data=$('#add_folder_form').serialize();
+		$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/add_folder',
+            success:function(response){
+            	$(".add_new_folder").hide();
+            	$(".folder_name").val("")
+            	$(".custom_folders").html(response);
+           	}
+        });
+	});
+	
+});
+
+function copyToClipboard(text) {
+  window.prompt("Copy to clipboard: Ctrl+C, Enter", text);
+}
+
+function loan_location()
+{
+	$('#l_location').show();
+	$('.loc').hide();
+}
+
+function location_edit()
+{
+	var data=$('#loc_form').serialize();
+	$.ajax({
+            data: data,
+            type: 'POST',
+            url: '/loans/save_loc',
+            success:function(response){
+            	var city=$('#loc_city').val();
+            	var state=$('#loc_state').val();
+            	$('.loc').html(city+', '+state);
+            	$('.loc').show();
+            	$('#l_location').hide();
+           	}
+        });
+}
+
+function cancel_loc()
+{
+	$('#l_location').hide();
+	$('.loc').show();
+}
+function lender_change(sts, id)
+    {
+            var status=sts.value;
+            var lender_id=id;
+            var data = "&status=" +status
+            $.ajax({
+                data: data,
+                type: 'POST',
+                url: '/loan_urls/'+lender_id+'/save_status',
+                 success:function(response){
+                    $('#del_'+id).hide();
+                }
+            }) ;
+    }
+
 </script>
 <div class='row'>
 <h1 class='text-left loan-heading'>
@@ -41,7 +230,7 @@ function handleMainImage(files) {
 
 </h1>
 </div>
-
+<% #abort("#{@loan.inspect}")%>
 <% if policy(@loan).update? %>
 <div id='show-urls' style='padding-left:50px;padding-right:50px;'>
 	<%= render partial: 'loan_url_form'%>
@@ -69,8 +258,8 @@ function handleMainImage(files) {
 		  <dd class="active"><a href="#overview">Overview</a></dd>
 		  <dd><a href="#borrower">Borrower</a></dd>
 		  <dd><a href="#collateral" onclick='get_property_map();'>Collateral</a></dd>
+		   <dd><a href="#exit-strategy">Exit Strategy</a></dd>
 		  <dd><a href="#pictures">Pictures</a></dd>
-		  <dd><a href="#exit-strategy">Exit Strategy</a></dd>
 		  <dd><a href="#documents">Documents</a></dd>
 		</dl>
 		<div class="tabs-content">

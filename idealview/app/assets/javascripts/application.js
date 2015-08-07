@@ -29,6 +29,7 @@ function callAjax(customUrl, divId, formId){
 	if(typeof(formId)==='undefined') data = '';
 	else data = $('#'+formId).serialize();
 	if(typeof(divId)===undefined) divId ='';
+	 $('#loan_lenders').html('loading...');
 	$.ajax({
 		type: 'POST',
 		url: customUrl,
@@ -36,6 +37,13 @@ function callAjax(customUrl, divId, formId){
 		success:function(data){
 
 			$('#'+divId).html(data);
+			if(formId=="lender_loans")
+			{
+				var a_id=divId.replace('loan_lenders','');
+				$('#click_'+a_id).hide();
+				$('#click_hide_'+a_id).show();
+				$("#loan_lenders"+a_id).show();
+			}
 
 				},
 		error:function(data){

@@ -7,6 +7,7 @@ class LoanUrl
   key :url #added on init
   key :visits
   key :emailed
+  key :status
   belongs_to :loan
 
 

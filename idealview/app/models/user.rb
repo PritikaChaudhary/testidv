@@ -21,6 +21,7 @@ class User
   key :is_admin, Boolean
   key :reset_password_token
   key :reset_password_sent_at
+  key :broker_id, String
 
   attr_accessible :name,:email, :password, :password_confirmation, :remember_me, :encrypted_password, :roles
   

@@ -1,0 +1,16 @@
+
+				<%temp_name = '_ExitStrategyHowwillyoupaytheloanoff'%>
+				<div id='<%=temp_name%>'>
+					<%= render partial: 'mini_form', locals:
+						{
+							edit: false,
+							contact_id:@loan['_id'],
+							format_type:'simple_format',
+							field_type: 'text_area_tag', 
+							field_label: 'Exit Strategy', 
+							field_name: temp_name,
+							field_value:@loan.info[temp_name],
+							field_options:'',
+						} %>
+				</div>
+	

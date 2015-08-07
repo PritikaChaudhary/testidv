@@ -1,36 +1,122 @@
 class LoansController < ApplicationController
   ActionController::Base.helpers
+  include ActionView::Helpers::NumberHelper
   require 'date'
 
+  skip_before_action :verify_authenticity_token, :only => :post_new_loan
+  before_action :verify_custom_authenticity_token, :only => :post_new_loan
 
 
 
-  def index
-    authorize Loan
-    @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
-    #@loans=@lo_ans.reverse
-    @loans.each_with_index do |loan, i|
- 
-      if loan['_LoanName'].blank?
-        loan['_LoanName'] = 'Awesome Loan Name'
-      end 
+ def index
+   #################### Create Broker  ######################
+    @loans = Loan.all(:incomplete.ne => 1)
+    @emails = Array.new
+    binfo = Array.new
+   @loans.each do |loan|
+      if defined? loan.info['Email']
+        @emails << loan.info['Email']
+      end
+   end
+   all_emails=Array.new
+  
+   @emails.each do |email|
+      unless email.blank?
+        @numbr= ""
+        @numbr = @emails.count(email) 
+        @i=0
+        if @numbr > 1
+        information = Loan.find_by_email(email)
+          check = Broker.find_by_email(email)
+              
+            if check.blank?
+              all_emails<<email
+              pas_string = (0...8).map { (65 + rand(26)).chr }.join
+              #abort("#{information.inspect}")
+              broker = Broker.new
+              unless information.info.blank?
+                 unless information.info['FirstName'].blank?
+                   broker.name = information.info['FirstName']
+                 end
+              end
+              broker.email = email
+              broker.password = pas_string
+              broker.save
+              #abort("#{broker.inspect}")
+              @userInfo = User.find_by_email(email)
+                if @userInfo.blank?
+                    @user = User.new
+                    authorize @user
+              @roles = Array.new
+                    @roles.push(Role.new(:name=>'Broker'))
+              @user.roles = @roles
+                    if defined? information['FirstName']
+                      @user.name = information['FirstName']
+                    end
+                    @user.email = email
+                    @user.password = pas_string
+                    @user.save
+                    #abort("#{@user.inspect}")
+                    LoanUrlMailer.email_broker(broker).deliver
+                    broker.email_status = 1
+                    broker.save
+                else
+                  @roles = @userInfo.roles
+          
+              @names = Array.new
+              @roles.each do |role|
+                @names = role['name']
+              end
 
-        dbLoan = Loan.find_by_id(loan['Id'])  
-        if dbLoan.blank?
-          dbLoan = Loan.new()
-          dbLoan.id = loan['Id']
-          dbLoan.name=loan['_LoanName']
-          dbLoan.info = loan
-          dbLoan.save
-        else
-            dbLoan.name=loan['_LoanName']
-            dbLoan.save
+              check_broker = @names.include? 'Broker'
+              if check_broker==false
+                 @roles.push(Role.new(:name=>'Broker'))
+                 @userInfo.roles=@roles
+                 @userInfo.save
+              end
+
+              end
+              @i +=1
+            end
+          check = ""
         end
-        if dbLoan.archived
-          @loans.delete_at(i)
+    end
+     
+    end
+    #abort("#{all_emails.inspect}")
+    
+    #################### End Broker Create ##################
+    #################### Check Login #######################
+    roles=current_user.roles
+    @names = Array.new
+    roles.each do |role|
+      @names << role.name
+    end
+    @checkAdmin = @names.include?('Admin')
+    @checkBroker = @names.include?('Broker')
+    if @checkBroker!=true
+      authorize Loan
+    end
+    #################### End Check Login #######################
+
+    if @checkAdmin!=true && @checkBroker==true
+      @broker_emails = Array.new
+      broker= Broker.find_by_email(current_user.email)
+      brokId=broker.id.to_s
+      @broker_emails << broker['email']
+      reqs = Request.all(:broker_id => brokId, :status =>1)
+      unless reqs.blank?
+        reqs.each do |req|
+          broker_req = Broker.find(req.subbroker_id)
+           @broker_emails << broker_req['email']
         end
-     end
-  end
+      end
+      @loans = Loan.all(:email =>@broker_emails, :delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :id.desc) 
+    else
+      #@loans = Loan.paginate(:delete.ne => 1, :archived.ne => true, :order => :id.desc, :per_page => 10, :page => params[:page])
+      @loans = Loan.all(:delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :id.desc)
+    end
+ end
   
   
   
@@ -96,10 +182,8 @@ class LoansController < ApplicationController
   end
   
   def show
+   loan_url = LoanUrl.find_by_url(params[:id])
 
-    loan_url = LoanUrl.find_by_url(params[:id])
-
-   
     if loan_url
       @loan = loan_url.loan
       if loan_url.visits.blank?
@@ -107,28 +191,22 @@ class LoansController < ApplicationController
       end
       loan_url.visits<<Time.now.getutc
       loan_url.save
-      
+      redirect_to action: 'loan_detail', id: params[:id]
     end
-     
-
-
 
     if @loan.blank? && !current_user.blank?
       @loan = Loan.find_by_id(params[:id].to_i)
+    #  abort("#{@loan.inspect  }")
     end
-
-
     if @loan.blank?
       flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
       redirect_to '/'
       return
     end
-
-   dateField = ['_ExpectedCloseDate', '_AppraisalDate', 'Birthday', 'DateCreated', 'LastUpdated']
-
+     dateField = ['_ExpectedCloseDate', '_AppraisalDate', 'Birthday', 'DateCreated', 'LastUpdated']
     if @loan.blank?
       begin
-        contact = Infusionsoft.data_load('Contact', params[:id], Loan.all_fields)
+        contact = infusionsoft.data_load('Contact', params[:id], Loan.all_fields)
       rescue Exception
         flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
         redirect_to '/'
@@ -155,31 +233,13 @@ class LoansController < ApplicationController
       @loan.save()
     
     else
-      begin
-        contact = Infusionsoft.data_load('Contact', @loan._id, Loan.all_fields)
-
-      rescue Exception
-        flash[:alert] ='You selected an invalid loan.'
-        redirect_to '/'
-        return;
-      end
-      
-      dateField.each do |field|
-        temp = contact[field]
-       if !temp.blank?
-          contact[field]=temp.year.to_s+'-'+temp.month.to_s+'-'+temp.day.to_s
-        end
-    end
-      @loan.info =  contact 
-      @loan.name = contact['_LoanName']
+   
       @images = @loan.images
       @documents = @loan.get_docs
       @loan.save()
     
     end
-     # render plain: @loan.info
-    # return     
-
+   @folders = CustomFolder.all(:loan_id => @loan.id.to_i)
       
   end
   
@@ -216,14 +276,28 @@ class LoansController < ApplicationController
           field_options:params[:field_options]
         } 
       else
-        if !params.has_key?('cancel')
-          Infusionsoft.contact_update(params[:contact_id], { @field => @field_value})
-        else
+       if !params.has_key?('cancel')
+         #Save
+          loan_info = Loan.find_by_id(params[:contact_id].to_i)
+          loan_info.info[params[:field_name]] =  @field_value
+                  
+          if params[:field_name] == "Email"
+            loan_info.email = @field_value
+          end
           
-          temp = Infusionsoft.data_load('Contact', params[:contact_id], [params[:field_name]])
-          @field_value = temp[params[:field_name]]
+
+          if params[:field_name] == "_LoanName"
+            loan_info.name = @field_value
+          end
+          
+          #abort("#{loan_info.inspect}")
+          loan_info.save
+       else
+         #Cancel
+         loan_info = Loan.find_by_id(params[:contact_id].to_i)
+         @field_value = loan_info.info[params[:field_name]]
           if @format_type == 'fd_money'
-            @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
+           @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
           end
            
         end
@@ -238,7 +312,6 @@ class LoansController < ApplicationController
           field_name:params[:field_name],
           field_value:@field_value, 
           field_options:params[:field_options]
-  
         } 
       end  
     end
@@ -277,6 +350,7 @@ class LoansController < ApplicationController
    
   
   def edit_category
+    lx = Loan.find_by_id(params[:id].to_i)
     loan = Loan.find_by_id(params[:id].to_i)
     loan.info["_LendingCategory"] = params[:_LendingCategory] 
     loanCat = Loan.category_type_fields[loan.info["_LendingCategory"]]
@@ -288,14 +362,14 @@ class LoansController < ApplicationController
       
    else
        if !params.has_key?('cancel')
-        Infusionsoft.contact_update(params[:id], { '_LendingCategory' => params[:_LendingCategory], loanCat=>params[loanCat]})
+        #Infusionsoft.contact_update(params[:id], { '_LendingCategory' => params[:_LendingCategory], loanCat=>params[loanCat]})
         loan.info['_LendingCategory']=params[:_LendingCategory]
         loan.info['loanCat']=params[loanCat]
         loan.save()
       else
         #temp = Infusionsoft.data_load('Contact', params[:contact_id], ['_LendingCategory', loanCat])
-        loan.info["_LendingCategory"] = loan.category
-        loan[loanCat] = loan.loan_type
+        loan.info["_LendingCategory"] = lx.info["_LendingCategory"]
+        loan[loanCat] =  lx.info['loanCat']
       end
  
       
@@ -307,13 +381,11 @@ class LoansController < ApplicationController
  
  
   def edit_loan_type
-    
     types = Loan.category_type_fields
     loanCat = params[:_LendingCategory]
     loan_type_options = Loan.loan_type_options
     # render text: loan_type_options[loanCat]
     # return
-
     render partial: 'loan_type_form', locals:{category: types[loanCat], options: loan_type_options[loanCat], field_value: ''}
   end
   
@@ -385,6 +457,8 @@ class LoansController < ApplicationController
          end   
       
     end
+
+
     redirect_to action: 'show', id: params[:id]
   end
 
@@ -424,7 +498,6 @@ class LoansController < ApplicationController
             image.featured = false
             image.save()
             output['files'].push({:name=>file_name, :success=>'Upload was successful!'})
-
           end    
        
      end 
@@ -468,26 +541,89 @@ class LoansController < ApplicationController
    output = Hash.new
    output['files']=Array.new
    
+   
    files.each do |file_io|
-     File.open(Rails.root.join('public', 'temp', file_io.original_filename), 'wb') do |file|
+    #abort("#{file_io.inspect}")
+    extension = File.extname(file_io.original_filename)
+    fname = File.basename(file_io.original_filename, extension) 
+    #new_filename = file_io.original_filename+"_" +Time.now.strftime("%m-%d-%y_%H:%M:%S")
+    new_filename = fname+"_" +Time.now.strftime("%m-%d-%y_%H:%M:%S")+extension
+    #abort("#{new_filename}")
+
+
+     File.open(Rails.root.join('public', 'temp', new_filename), 'wb') do |file|
         
       contents = file_io.read
       base64Contents = Base64.encode64(contents)
       file.write(contents)
-         output['files'].push({:name=>file_io.original_filename, :success=>'Upload was successful!'})
+        
+         output['files'].push({:name=>new_filename, :success=>'Upload was successful!'})
           #check each image and see if it is already in infusionsoft
           @check = false
           loan.get_docs.each do |img|
             fields = ['Id']
-            if file_io.original_filename == img.name
+            if new_filename == img.name
               @check = img
             end
           end
           
           if @check==false
-            @isFile = Infusionsoft.file_upload(params[:id].to_i, file_io.original_filename, base64Contents)
-              ext =  file_io.original_filename.split('.').last.downcase 
-              doc = Document.new(:loan_id=>loan._id, :file_id=>@isFile.to_i, :name=>file_io.original_filename, :category=>params[:category]);
+            # @isFile = Infusionsoft.file_upload(params[:id].to_i, file_io.original_filename, base64Contents)
+             # ext =  file_io.original_filename.split('.').last.downcase 
+              doc = Document.new(:loan_id=>loan._id, :name=>new_filename, :category=>params[:category]);
+              doc.save()
+          end    
+       
+     end 
+   end
+    render json: output
+    return    
+  end
+
+   def upload_file
+   loan=Loan.find_by_id(params[:id].to_i)
+   files =  params[:files]
+   output = Hash.new
+   output['files']=Array.new
+   
+   
+   files.each do |file_io|
+    #abort("#{file_io.inspect}")
+    extension = File.extname(file_io.original_filename)
+    fname = File.basename(file_io.original_filename, extension) 
+    #new_filename = file_io.original_filename+"_" +Time.now.strftime("%m-%d-%y_%H:%M:%S")
+    new_filename = fname+"_" +Time.now.strftime("%m-%d-%y_%H:%M:%S")+extension
+    #abort("#{new_filename}")
+
+
+     File.open(Rails.root.join('public', 'temp', new_filename), 'wb') do |file|
+        
+      contents = file_io.read
+      base64Contents = Base64.encode64(contents)
+      file.write(contents)
+        
+         output['files'].push({:name=>new_filename, :success=>'Upload was successful!'})
+          #check each image and see if it is already in infusionsoft
+          @check = false
+          loan.get_docs.each do |img|
+            fields = ['Id']
+            if new_filename == img.name
+              @check = img
+            end
+          end
+          
+          if @check==false
+            # @isFile = Infusionsoft.file_upload(params[:id].to_i, file_io.original_filename, base64Contents)
+             # ext =  file_io.original_filename.split('.').last.downcase 
+              
+              
+              doc = FolderFile.new
+              doc.loan_id = params[:id]
+              doc.name = new_filename
+              unless current_user.blank?
+                doc.user_id = current_user.id
+              end
+              doc.custom_folder_id = params[:folder]
               doc.save()
           end    
        
@@ -499,14 +635,16 @@ class LoansController < ApplicationController
 
 
   def view_doc
-    doc = Document.find_by_file_id(params[:id].to_i)
-    begin
-      contents = Infusionsoft.file_get(params[:id])
-    rescue
-        flash[:alert] ='The document you selected is not available.'
-        redirect_to '/'
-        return;
-    end
+    doc = Document.find_by_id(params[:id])
+    #abort("#{doc.inspect}")
+    #begin
+     # contents = Infusionsoft.file_get(doc['file_id'])
+      #abort("#{contents.inspect}")
+    #rescue
+     #   flash[:alert] ='The document you selected is not available.'
+      #  redirect_to '/'
+       # return;
+    # end
     
     if doc.blank?
         flash[:alert] ='The document you selected is not available.'
@@ -514,10 +652,36 @@ class LoansController < ApplicationController
         return;     
     end
     
-    decodedContents = Base64.decode64(contents); 
-
+    #decodedContents = Base64.decode64(contents); 
+    #abort("#{decodedContents}")
     fileName = Rails.root.join('public', 'temp', doc[:name])
-    File.open(fileName, 'wb') { |f| f.write(decodedContents) }
+    #File.open(fileName, 'wb') { |f| f.write(decodedContents) }
+    send_file fileName
+    return
+  end
+
+  def view_file
+    doc = FolderFile.find_by_id(params[:id])
+    #abort("#{doc.inspect}")
+    #begin
+     # contents = Infusionsoft.file_get(doc['file_id'])
+      #abort("#{contents.inspect}")
+    #rescue
+     #   flash[:alert] ='The document you selected is not available.'
+      #  redirect_to '/'
+       # return;
+    # end
+    
+    if doc.blank?
+        flash[:alert] ='The document you selected is not available.'
+        redirect_to '/'
+        return;     
+    end
+    
+    #decodedContents = Base64.decode64(contents); 
+    #abort("#{decodedContents}")
+    fileName = Rails.root.join('public', 'temp', doc[:name])
+    #File.open(fileName, 'wb') { |f| f.write(decodedContents) }
     send_file fileName
     return
   end
@@ -590,13 +754,11 @@ class LoansController < ApplicationController
     render 'show' 
   end
   
- 
-  
   def archive
     @loan = Loan.find_by_id(params[:id].to_i)
     @loan.archived = true
     @loan.save
-    Infusionsoft.contact_add_to_group(@loan.id, 282) 
+    #Infusionsoft.contact_add_to_group(@loan.id, 282) 
     render plain: 'Archived!'
     #redirect_to :action =>"index", :id=>@loan.id    
   end
@@ -604,7 +766,6 @@ class LoansController < ApplicationController
   def docs
     id = Base64.decode64(Base64.decode64(params[:id])) 
     loan_url = Loan.find_by_id(id.to_i)
-
 
     if loan_url
       @loan = loan_url
@@ -623,7 +784,6 @@ class LoansController < ApplicationController
         return;    
     end
 
- 
     if @loan.blank? 
       @loan = Loan.find_by_id(params[:id].to_i)
     end
@@ -632,25 +792,6 @@ class LoansController < ApplicationController
 
     if @loan.blank?
      
-      begin
-        contact = Infusionsoft.data_load('Contact', params[:id], Loan.all_fields)
-      rescue Exception
-        flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
-        redirect_to '/'
-        return;
-      end
-        
-      if contact['_LoanName'].blank?
-        contact['_LoanName'] = 'Your Awesome Loan Name Here'
-      end 
-      
-      dateField.each do |field|
-        temp = contact[field]
-        if !temp.blank?
-          contact[field]=temp.year.to_s+'-'+temp.month.to_s+'-'+temp.day.to_s
-        end
-      end
-
       @loan = Loan.new
       @loan.name=contact['_LoanName']
       @loan._id = contact['Id']
@@ -661,85 +802,93 @@ class LoansController < ApplicationController
     
     else
       begin
-        contact = Infusionsoft.data_load('Contact', @loan._id, Loan.all_fields)
-
+        
       rescue Exception
         flash[:alert] ='You selected an invalid loan.'
         redirect_to '/'
         return;
       end
       
-      dateField.each do |field|
-        temp = contact[field]
-       if !temp.blank?
-          contact[field]=temp.year.to_s+'-'+temp.month.to_s+'-'+temp.day.to_s
-        end
-    end
-      @loan.info =  contact 
-      @loan.name = contact['_LoanName']
+      
       @images = @loan.images
       @documents = @loan.get_docs
       @loan.save()
     
     end
-   
-     # render plain: @loan.info
-    # return     
 
+    @folders = CustomFolder.all(:loan_id => @loan.id.to_i)
   end
 
  def recent
-   @all_loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
-    @loans=@all_loans.reverse
-    @loans.each_with_index do |loan, i|
- 
-      if loan['_LoanName'].blank?
-        loan['_LoanName'] = 'Awesome Loan Name'
-      end 
-
-        dbLoan = Loan.find_by_id(loan['Id'])  
-        if dbLoan.blank?
-          dbLoan = Loan.new()
-          dbLoan.id = loan['Id']
-          dbLoan.name=loan['_LoanName']
-          dbLoan.info = loan
-          dbLoan.save
-        else
-            dbLoan.name=loan['_LoanName']
-            dbLoan.save
+       #################### Check Login #######################
+  
+    roles=current_user.roles
+    @names = Array.new
+    roles.each do |role|
+      @names << role.name
+    end
+    @checkAdmin = @names.include?('Admin')
+    @checkBroker = @names.include?('Broker')
+    if @checkBroker!=true
+     # authorize Loan
+    end
+    #################### End Check Login #######################
+    if @checkAdmin!=true && @checkBroker==true
+      @broker_emails = Array.new
+      broker= Broker.find_by_email(current_user.email)
+      brokId=broker.id.to_s
+      @broker_emails << broker['email']
+      reqs = Request.all(:broker_id => brokId, :status =>1)
+      unless reqs.blank?
+        reqs.each do |req|
+          broker_req = Broker.find(req.subbroker_id)
+           @broker_emails << broker_req['email']
         end
-        if dbLoan.archived
-          @loans.delete_at(i)
-        end
-     end
-     flash.now[:notice] = "Recent Loans"
+      end
+      @loans = Loan.all(:email =>@broker_emails, :delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :id.desc) 
+    else
+      #@loans = Loan.paginate(:delete.ne => 1, :archived.ne => true, :order => :id.desc, :per_page => 10, :page => params[:page])
+      
+       @loans = Loan.all(:delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :id.desc)
+    end
+     flash.now[:notice] = "Sorting by recent Loans"
      render partial: 'loans/all_loans'
   end
 
-  def priority
-    @loans = Infusionsoft.data_query('Contact',1000,0,{:ContactType=>'Borrower'},Loan.highlight_fields) 
-    @loans.each_with_index do |loan, i|
- 
-      if loan['_LoanName'].blank?
-        loan['_LoanName'] = 'Awesome Loan Name'
-      end 
 
-        dbLoan = Loan.find_by_id(loan['Id'])  
-        if dbLoan.blank?
-          dbLoan = Loan.new()
-          dbLoan.id = loan['Id']
-          dbLoan.name=loan['_LoanName']
-          dbLoan.info = loan
-          dbLoan.save
-        else
-            dbLoan.name=loan['_LoanName']
-            dbLoan.save
+  def priority
+      #################### Check Login #######################
+    roles=current_user.roles
+    @names = Array.new
+    roles.each do |role|
+      @names << role.name
+    end
+    @checkAdmin = @names.include?('Admin')
+    @checkBroker = @names.include?('Broker')
+    if @checkBroker!=true
+     # authorize Loan
+    end
+    #################### End Check Login #######################
+
+    if @checkAdmin!=true && @checkBroker==true
+      @broker_emails = Array.new
+      broker= Broker.find_by_email(current_user.email)
+      brokId=broker.id.to_s
+      @broker_emails << broker['email']
+      reqs = Request.all(:broker_id => brokId, :status =>1)
+      unless reqs.blank?
+        reqs.each do |req|
+          broker_req = Broker.find(req.subbroker_id)
+           @broker_emails << broker_req['email']
         end
-        if dbLoan.archived
-          @loans.delete_at(i)
-        end
-     end
-     flash.now[:notice] = "Recent Loans"
+      end
+      @loans = Loan.all(:email =>@broker_emails, :delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :sort_id.asc) 
+    else
+      #@loans = Loan.paginate(:delete.ne => 1, :archived.ne => true, :order => :id.desc, :per_page => 10)
+      @loans = Loan.all(:delete.ne => 1, :archived.ne => true, :incomplete.ne => 1, :order => :sort_id.asc)
+    end
+    
+     flash.now[:notice] = "Sorting by priority"
      render partial: 'loans/sort_loans'
   end
 
@@ -747,15 +896,785 @@ class LoansController < ApplicationController
     @loan_ids=params[:moredata].split(",").map { |s| s.to_i }
     x=1
     @loan_ids.each do |number|
-      loanRecord.clear
-      loanRecord=Loan.new()
-      loanRecord.id=number
-      loanRecord.order_id=x
+      loanRecord=Loan.find(number)
+      loanRecord.sort_id=x
       loanRecord.save
-       x += 1  
+      x += 1  
     end
-      render nothing: true
+    render nothing: true
+  end
+
+   
+
+  def generate_pdfs
+    ids=params[:moredata].split(",").map { |s| s.to_i }
+    require "prawn"
+    time="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+    Prawn::Document.generate("pdfs/"+time+".pdf") do
+
+     #Prawn::Document.generate("public/pdfs/"+time+".pdf") do
+
+    @loans = Loan.find(ids)
+      @loans.map do |loan| 
+       a=""
+        unless loan.info['City3'].blank?
+          a += loan.info['City3']
+        end
+        unless loan.info['State3'].blank?
+          a += ", "+ loan.info['State3']
+        end
+
+        unless loan.info['_NetLoanAmountRequested0'].blank?
+          amnt="$ "+loan.info['_NetLoanAmountRequested0'].to_s
+        else
+          amnt="N/A"
+        end
+
+        unless loan.info['_LoanSummaryWhatareyoulookingfor'].blank?
+          summary=loan.info['_LoanSummaryWhatareyoulookingfor']
+        else
+          summary=""
+        end
+      loans =  [["<b>"+loan.name+" | "+a+"\n Loan Amount: </b>"+amnt+"\n <b>Summary: </b>"+summary]] 
+      table loans
+      end
+   
+
+    end
+    pdf_filename =  time+".pdf"
+    send_data(pdf_filename, :filename => "your_document.pdf", :type => "application/pdf")
+  end
+
+def generate_pdf
+  ids=params[:moredata].split(",").map { |s| s.to_i }
+  today=Time.new
+  str_time=today.strftime("%d/%m/%Y")
+   time="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")+".pdf"
+    # file_path = "public/pdfs/"+time+".pdf"
+  text="<div style='width:100%'><img src='http://idealview.us/assets/idealview-logo-2c6b9989b6877f38ebd24059a00f91e4.png' style='width:250px; float:left;'><p style='float:right;'>Pipeline Summary "+str_time+"</p></div>"
+  @loans = Loan.find(ids)
+  @loans.map do |loan|
+    a=""
+    unless loan.info['City3'].blank?
+      a += loan.info['City3']
+    end
+    unless loan.info['State3'].blank?
+      a += ", "+ loan.info['State3']
+    end
+
+    if a==""
+      a="N/A"
+    end
+
+    unless loan.info['_NetLoanAmountRequested0'].blank?
+      amnt="$ "+loan.info['_NetLoanAmountRequested0'].to_s
+    else
+      amnt="N/A"
+    end
+
+    unless loan.info['_LoanSummaryWhatareyoulookingfor'].blank?
+      summary=loan.info['_LoanSummaryWhatareyoulookingfor']
+     # summary=sentence.summary! '"',''
+    else
+      summary=""
+    end
+
+    #text +="<div style='width:94%; border: 2px solid black; text-align:left; float:left; margin-left:10px; padding-left:10px; padding-right:10px; padding-bottom:25px; margin-bottom:25px; white-space: pre; word-wrap: break-word; -webkit-hyphens: auto;-moz-hyphens: auto; hyphens: auto;'><br><b>"+loan.name+" | "+a+"</b><br><b>Loan Amount : </b>"+amnt+"<br><br><b>Summary : </b>"+summary+"<br></div><br><br><br><br>"
+    text +="<div style='width:94%; border: 2px solid black; text-align:left; float:left; margin-left:10px; padding-left:10px; padding-right:10px; padding-bottom:25px; margin-bottom:25px;'><br><b>"+loan.name+" | "+a+"</b><br><b>Loan Amount : </b>"+amnt+"<br><br><b>Summary : </b>"+summary+"<br></div><br><br><br><br>"
+
+  end
+     pdf = WickedPdf.new.pdf_from_string(text, encoding: "UTF-8")
+    save_path = Rails.root.join('pdfs',time)
+    File.open(save_path, 'wb') do |file|
+     file << pdf
+    end
+    # render nothing: true
+     pdf_filename =  time
+    send_data(pdf_filename, :filename => "your_document.pdf", :type => "application/pdf")
+end
+
+def generate_pdf_old
+ ids=params[:moredata].split(",").map { |s| s.to_i }
+  today=Time.new
+  str_time=today.strftime("%d/%m/%Y")
+  text="<div style='width:100%'><img src='http://idealview.us/assets/idealview-logo-2c6b9989b6877f38ebd24059a00f91e4.png' style='width:250px; float:left;'><p style='float:right;'>Pipeline Summary "+str_time+"</p></div>"
+  @loans = Loan.find(ids)
+  @loans.map do |loan|
+    a=""
+    unless loan.info['City3'].blank?
+      a += loan.info['City3']
+    end
+    unless loan.info['State3'].blank?
+      a += ", "+ loan.info['State3']
+    end
+
+    if a==""
+      a="N/A"
+    end
+
+    unless loan.info['_NetLoanAmountRequested0'].blank?
+      amnt="$ "+loan.info['_NetLoanAmountRequested0'].to_s
+    else
+      amnt="N/A"
+    end
+
+    unless loan.info['_LoanSummaryWhatareyoulookingfor'].blank?
+      summary=loan.info['_LoanSummaryWhatareyoulookingfor']
+     # summary=sentence.summary! '"',''
+    else
+      summary=""
+    end
+
+    text +="<div style='width:98%; border: 2px solid black; text-align:left; float:left; margin-left:10px; padding-left:10px; padding-bottom:25px; margin-bottom:25px;'><br><b>"+loan.name+" | "+a+"</b><br><b>Loan Amount : </b>"+amnt+"<br><br><b>Summary : </b>"+summary+"<br></div><br><br><br><br>"
+  end
+
+    kit = PDFKit.new(text)
+    time="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+    #file_path = "public/pdfs/"+time+".pdf"
+    file_path = "pdfs/"+time+".pdf"
+    pdf = kit.to_file file_path
+    pdf_filename =  time+".pdf"
+    send_data(pdf_filename, :filename => "your_document.pdf", :type => "application/pdf")
+  end
+
+ def show_pdf
+   send_file 'pdfs/'+params[:id]+'.pdf', :type => 'application/pdf'
+ end
+
+ def pdf
+  today=Time.new
+  str_time=today.strftime("%d/%m/%Y")
+  file_name="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+  dbPdf=Pdf.new()
+  dbPdf.file_name=file_name
+  dbPdf.date_created=today
+  dbPdf.save
+  last_id=dbPdf.id
+  
+  sort=1
+  params[:q].map do |id|
+   l_id=id.to_i
+   @loan = Loan.find_by_id(l_id)
+    a=""
+    if defined? @loan.info['City3']
+      unless @loan.info['City3'].blank?
+        a += @loan.info['City3']
+      end
+    end
+    if defined? @loan.info['State3']
+      unless @loan.info['State3'].blank?
+        a += ", "+ @loan.info['State3']
+      end
+    end
+
+    if a==""
+      a="N/A"
+    end
+    if defined? @loan.info['_NetLoanAmountRequested0']
+      unless @loan.info['_NetLoanAmountRequested0'].blank?
+        amnt="$ "+@loan.info['_NetLoanAmountRequested0'].to_s
+      else
+        amnt="N/A"
+      end
+    end
+
+    if defined? @loan.info['_LoanSummaryWhatareyoulookingfor']
+      unless @loan.info['_LoanSummaryWhatareyoulookingfor'].blank?
+        summary=@loan.info['_LoanSummaryWhatareyoulookingfor']
+        
+       # summary=sentence.summary! '"',''
+      else
+        summary=""
+      end
+    end
+
+   dbrec=LoanPdf.new()
+   dbrec.pdf_id=last_id
+   dbrec.loan_name=@loan.name
+   dbrec.location=a
+   dbrec.amount=amnt
+   dbrec.summary=summary
+   dbrec.sort_id=sort
+   dbrec.save
+   #abort("#{dbrec.inspect}")
+   sort += 1
+ end
+ redirect_to :action => "edit_pdf", :id => last_id
+  
+end
+
+def edit_pdf
+  @lenders=LoanUrl.all
+  #abort("#{@lenders}")
+  @emails=Array.new
+  @lenders.each do |lender|
+    @emails<<lender.email
+  end 
+  @all_emails=@emails.uniq
+  pdfId=params[:id]
+  @record=Pdf.find(pdfId)
+  @pdfs=@record.pdf_by_loan
+  today=Time.new
+  @str_time=today.strftime("%d/%m/%Y")
+  @file_name="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+  if @record.emails.blank?
+ else
+    @email_select=@record.emails.split(', ')
+    @email_select.each do |select_email|
+      @all_emails.delete(select_email)
+    end
+  end
+end
+
+def generate_html
+  #abort("#{params}")
+  if params[:fname]!=""
+    filename=params[:fname]
+  else
+    filename="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+  end
+  #abort(params[:content]);
+  IO.write('/tmp/'+filename+'.html', params[:content])
+
+  pdf = WickedPdf.new.pdf_from_html_file('/tmp/'+filename+'.html')
+  time="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+  # then save to a file
+  save_path = Rails.root.join('pdfs',filename+'.pdf')
+  #save_path = Rails.root.join('pdfs','loans_'+time+'.pdf')
+  File.open(save_path, 'wb') do |file|
+    file << pdf
+  end
+   pdfInfo = Pdf.find_by_id(params[:pdfId])
+   pdfInfo.file_name = filename
+   pdfInfo.name=filename
+   unless  params[:emails].blank?
+      pdfInfo.emails = params[:emails].join(", ")
+   end
+   pdfInfo.content = params[:loans]
+   pdfInfo.save
+   pdf_filename =  filename+".pdf"
+   send_data(pdf_filename, :filename => "your_document.pdf", :type => "application/pdf")
+   #redirect_to :action => "pdf_files", :id => "listing"
+end
+
+
+
+def hide_file
+  @doc_id=params[:id]
+  doc = Document.find(@doc_id)
+  doc.hide = 1
+  doc.save
+  render nothing: true
+ end
+
+ def hide_doc
+  @file_id=params[:id]
+  doc = FolderFile.find(@file_id)
+  doc.hide = 1
+  doc.save
+  render nothing: true
+ end
+
+ def show_file
+  @doc_id=params[:id]
+  doc = Document.find(@doc_id)
+  doc.hide = 0
+  doc.save
+  render nothing: true
+ end
+
+ def show_doc
+  @doc_id=params[:id]
+  doc = FolderFile.find(@doc_id)
+  doc.hide = 0
+  doc.save
+  render nothing: true
+ end
+
+  def del_file
+  @doc_id=params[:id]
+  doc = Document.find(@doc_id)
+  doc.delete = 1
+  doc.save
+  render nothing: true
+ end
+
+ def del_doc
+  @doc_id=params[:id]
+  doc = FolderFile.delete(@doc_id)
+  #doc.delete = 1
+  #doc.save
+  render nothing: true
  end
 
 
+ def del_folder
+  @folder_id=params[:id]
+  CustomFolder.delete(@folder_id)
+  FolderFile.delete_all(:custom_folder_id => @folder_id)
+  render nothing: true
+ end
+
+ def send_to_cpc
+  require 'net/http'
+  require 'uri'
+  @loan_id=params[:id].split(",").map { |s| s.to_i }
+  @loans = Loan.find(@loan_id)
+  uri = URI.parse('http://localhost/CPC/diversified_html/index.php?r=sls/realin/index');
+  http = Net::HTTP.new(uri.host, uri.port)
+  request = Net::HTTP::Post.new(uri.request_uri)
+  request.set_form_data(@loans[0]['info'])
+  response = http.request(request)
+
+   #contact['cpc_id']=response.body
+   #@loans.info = contact
+   #@loans.save()
+   render :json => "Sent"
+ end
+
+ def application
+   roles=current_user.roles
+    @names = Array.new
+    roles.each do |role|
+      @names << role.name
+    end
+    @checkAdmin = @names.include?('Admin')
+    @checkBroker = @names.include?('Broker')
+    #abort("#{@names.inspect}")
+    #Infusionsoft.contact_add({:FirstName => 'Amy', :LastName => 'Virk', :Email => 'amyvirk@gmail.com'})
+  
+ end
+
+  def create_application
+      
+    loan_gurantor=params[:GurantorName]
+
+    params.delete :action
+    params.delete :GurantorName
+    params.delete :controller     
+   # abort("#{params.inspect}")
+    params[:ContactType]="Borrower"
+   # rsp= Infusionsoft.contact_add(params)
+    @last_loan = Loan.last
+    @new_id = @last_loan.id+1
+
+    dbLoan = Loan.new()
+    if params[:_LoanName].blank?
+      dbLoan.name = 'Awesome Loan Name'
+    else
+      dbLoan.name=params[:_LoanName]
+    end
+    unless params[:Email].blank?
+      dbLoan.email = params[:Email]
+    end
+    #params[:Id]=rsp
+    params[:GurantorName]=loan_gurantor
+    dbLoan.id = @new_id
+    dbLoan.info=params
+    dbLoan.save
+    flash[:notice] = "Application is submitted successfully"  
+    redirect_to action: 'index'
+ end  
+
+ def delete_loans
+  ids=params[:moredata].split(",").map { |s| s.to_i }
+ 	ids.each do |number|
+      loanRecord=Loan.find(number)
+      loanRecord.delete=1
+      loanRecord.save
+  end 
+  recent
+  flash.now[:notice] = "Loans deleted successfully"
+ end
+
+ def save_loc
+ 	id=params[:id].split(",").map { |s| s.to_i }
+ 	loan=Loan.find_by_id(id)
+	loan.info["City3"] = params[:City3] 
+ 	loan.info["State3"] = params[:State3] 
+    loan.save()
+	render nothing: true
+  end
+
+  def edit_info
+    pdfInfo=LoanPdf.find_by_id(params[:id])
+    current_sort=pdfInfo.sort_id
+     if current_sort!=params[:sort_id]
+      info=LoanPdf.find_by_sort_id(params[:sort_id])
+      info.sort_id=current_sort
+      info.save
+    end
+    pdfInfo.loan_name=params[:loan_name]
+    pdfInfo.location=params[:location]
+    pdfInfo.amount=params[:amount]
+    pdfInfo.summary=params[:summary]
+    pdfInfo.sort_id=params[:sort_id]
+    pdfInfo.save
+
+   
+    pdfId=pdfInfo.pdf_id
+    @record=Pdf.find(pdfId)
+    @pdfs=@record.pdf_by_loan
+    today=Time.new
+    @str_time=today.strftime("%d/%m/%Y")
+    render partial: 'loans/loan_listing', :locals => {:id => pdfInfo.pdf_id}
+ end
+
+ def loan_listing
+  pdfId=params[:id]
+   @record=Pdf.find(pdfId)
+  @pdfs=@record.pdf_by_loan
+  today=Time.new
+  @str_time=today.strftime("%d/%m/%Y")
+end
+
+def pdforder
+    @loan_ids=params[:moredata].split(",").map { |s| s }
+    #abort("#{@loan_ids.inspect}")
+    x=1
+    @loan_ids.each do |number|
+      if number!=""
+        pdfInfo=LoanPdf.find(number)
+        #abort("#{pdf.inspect}")
+        @pdfId=pdfInfo.pdf_id
+        pdfInfo.sort_id=x
+        pdfInfo.save
+      end
+      x += 1  
+    end
+     @record=Pdf.find(@pdfId)
+     @pdfs=@record.pdf_by_loan
+     today=Time.new
+     @str_time=today.strftime("%d/%m/%Y")
+     render partial: 'loans/loan_listing', :locals => {:id => @pdfId}
+  end
+
+  def pdf_files
+    @pdfs=Pdf.all(:conditions=>["name != ''"])
+  end
+
+  def email_pdf
+     loan_url = LoanUrl.find_by_id(params[:id])
+     @loan = loan_url.loan
+     if loan_url
+       LoanUrlMailer.email_link(loan_url).deliver
+       loan_url.emailed = true
+       loan_url.save
+       flash.now[:notice] = "Link was sent to "+loan_url.email
+     end 
+         render partial: 'loans/loan_url_form'   
+  end
+
+  def generate_send
+    if params[:fname]!=""
+      filename=params[:fname]
+    else
+      filename="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+    end
+    IO.write('/tmp/'+filename+'.html', params[:content])
+    pdf = WickedPdf.new.pdf_from_html_file('/tmp/'+filename+'.html')
+    time="loans_"+Time.now.strftime("%m-%d-%y_%H-%M-%S")
+    # then save to a file
+    save_path = Rails.root.join('pdfs',filename+'.pdf')
+    #save_path = Rails.root.join('pdfs','loans_'+time+'.pdf')
+    File.open(save_path, 'wb') do |file|
+      file << pdf
+    end
+     pdfInfo = Pdf.find_by_id(params[:pdfId])
+     pdfInfo.file_name = filename
+     unless  params[:emails].blank?
+      pdfInfo.emails = params[:emails].join(", ")
+     end
+      pdfInfo.name=filename
+      pdfInfo.content = params[:loans]
+      pdfInfo.save
+      
+     if pdfInfo
+      params[:emails].each do |email|
+          LoanUrlMailer.email_pdf(pdfInfo, email).deliver
+      end
+       pdfInfo.status = 1
+       pdfInfo.save
+     end 
+     pdf_filename =  filename+".pdf"
+     send_data(pdf_filename, :filename => "your_document.pdf", :type => "application/pdf")
+     #redirect_to :action => "pdf_files", :id => "listing"
+  end
+
+  def custom_search
+
+    ###################################### Check User Role ################################################################
+    roles=current_user.roles
+    @names = Array.new
+    roles.each do |role|
+      @names << role.name
+    end
+    @checkAdmin = @names.include?('Admin')
+    @checkBroker = @names.include?('Broker')
+    
+    ###################################### End Check User ##################################################################
+    
+    ###################################### Fetch Loans #####################################################################
+    if @checkAdmin==true
+      all_loans=Loan.all
+    else
+      broker_loans = Array.new
+      broker = Broker.find_by_email(current_user.email)
+      brokId=broker.id.to_s
+      reqs = Request.all(:broker_id => brokId, :status =>1)
+      unless reqs.blank?
+        reqs.each do |req|
+          subbroker = Broker.find(req.subbroker_id)
+          unless subbroker.blank?
+              b_loans = Loan.where(:email => subbroker.email).fields(:id).all
+              b_loans.each do |loan_id|
+                  broker_loans << loan_id.id
+              end
+          end
+        end
+        br_loans = Loan.where(:email => broker.email).fields(:id).all
+        br_loans.each do |bloan_id|
+            broker_loans << bloan_id.id
+        end
+      end
+      all_loans=Loan.all(:id => broker_loans)
+    end
+    ###################################### Fetch Loans End #####################################################################
+
+    by_loanmin = Array.new
+    state_id = Array.new
+    loan_cat = Array.new 
+    loan_type = Array.new
+    custom_search = Array.new
+    type = ""
+    all_loans.each do |loan|
+      
+      ####################################################### Loan Value #################################################
+      if  params['loanMaxDropDown'].to_i>0 
+       if defined? loan.info['_NetLoanAmountRequested0']
+          if loan.info['_NetLoanAmountRequested0'].to_i>=params['loanMinDropDown'].to_i &&  loan.info['_NetLoanAmountRequested0'].to_i<=params['loanMaxDropDown'].to_i
+             by_loanmin << loan.id
+          end
+        end
+      end
+
+      if params['loanMaxDropDown'].to_i==0
+          if defined? loan.info['_NetLoanAmountRequested0']
+            if loan.info['_NetLoanAmountRequested0'].to_i>=params['loanMinDropDown'].to_i
+             by_loanmin << loan.id
+            end 
+          end
+      end
+
+      ####################################################### Loan Value End ################################################
+    
+      ###################################################### States ##########################################################
+      unless params['State3'].blank?
+        if defined? loan.info['State3']
+          params['State3'].each do |state|
+              if loan.info['State3']==state
+                  state_id<<loan.id
+              end
+          end   
+        end
+      end
+      ###################################################### States End ######################################################
+      
+      ###################################################### Lending Category ################################################
+      
+       unless params['lendingCategory'].blank?
+        if defined? loan.info['_LendingCategory']
+          if loan.info['_LendingCategory'] == params['lendingCategory']
+              loan_cat << loan.id
+          end
+        end
+       end
+
+      ###################################################### Lending Category End ################################################
+      
+      ###################################################### Lending Type ########################################################
+        
+       unless params['lendingTypes'].blank?
+        type = "yes"
+        if defined? loan.info['_LendingTypes']
+          unless loan.info['_LendingTypes'].blank?
+            #lending_types = loan.info['_LendingTypes'].split(",")
+            if loan.info['_LendingTypes'] == params['lendingTypes']
+                loan_type << loan.id
+            end
+          end
+        end
+     end
+
+
+     unless params['businessFinancingTypes'].blank?
+        type = "yes"
+         if defined? loan.info['_BusinessFinancingTypes']
+          unless loan.info['_BusinessFinancingTypes'].blank?
+            #business_types = loan.info['_BusinessFinancingTypes'].split(",")
+              if loan.info['_BusinessFinancingTypes'] == params['businessFinancingTypes']
+                loan_type << loan.id
+            end
+          end
+        end
+     end
+     unless params['equityandCrowdFunding'].blank?
+        type = "yes"
+        if defined? loan.info['_EquityandCrowdFunding']
+          unless loan.info['_EquityandCrowdFunding'].blank?
+          #lending_types = loan.info['_EquityandCrowdFunding'].split(",")
+            if loan.info['_EquityandCrowdFunding'] == params['equityandCrowdFunding']
+                loan_type << loan.id
+            end
+          end
+        end
+     end
+     unless params['mortageTypes'].blank?
+        type = "yes"
+        if defined? loan.info['_MortageTypes']
+          unless loan.info['_MortageTypes'].blank?
+            #lending_types = loan.info['_MortageTypes'].split(",")
+            if loan.info['_MortageTypes'] == params['mortageTypes']
+                loan_type << loan.id
+            end
+          end
+        end
+     end
+
+      ###################################################### Lending Type End ####################################################
+    end 
+      custom_search[0] = by_loanmin 
+
+      unless params['State3'].blank?
+        if params['State3'][0].blank?
+          custom_search[1] = by_loanmin
+        else
+          custom_search[1] = state_id 
+       end
+      else
+        custom_search[1] = by_loanmin
+      end
+
+      unless params['lendingCategory'].blank?
+        if params['lendingCategory'] == "all"
+            custom_search[2] = by_loanmin
+        else
+            custom_search[2] = loan_cat
+        end
+        
+      end
+
+      if type=="yes"
+        custom_search[3] = loan_type 
+      end
+     # abort("#{custom_search.inspect}")
+
+    
+    select = custom_search
+   # custom_search.each do |search|
+    #  unless search.blank?
+     #    select<<search  
+     # end
+    #end
+
+    num = select.count 
+    
+    if num==1
+      ids = select[0]
+    elsif num==2
+      ids = select[0]&select[1]
+    elsif num==3
+      ids = select[0]&select[1]&select[2]
+    else
+      ids = select[0]&select[1]&select[2]&select[3]
+    end
+   ########################################### Check Sorting ##############################################
+   if params['sorting'] == "recent"
+      @loans_record = Loan.find(ids)
+      if @loans_record.blank?
+        @loans = Array.new
+        @empty =  "No Loan Found."
+      else
+        @loans=@loans_record.reverse { |k| k['id'] }
+      end
+      flash.now[:notice] = "Sorting by recent Loans"
+      render partial: 'loans/all_loans'
+   else
+      @loans_record = Loan.find(ids)
+      if @loans_record.blank?
+        @loans = Array.new
+        @empty =  "No Loan Found."
+      else
+        @loans=@loans_record.sort_by { |k| k['sort_id'] }
+      end
+      flash.now[:notice] = "Sorting by priority"
+      render partial: 'loans/sort_loans'
+   end
+   ########################################### Check Sorting End ##############################################
+  end
+
+  def post_new_loan
+    unless params.blank?
+      params.delete :action
+      params.delete :_wp_http_referer
+      params.delete :controller
+      @last_loan = Loan.last
+      @new_id = @last_loan.id+1
+      time = Time.new
+      unless params[:nvid].blank?
+        id = params[:nvid].to_i
+        dbloan=Loan.find_by_id(id)
+      else
+        dbloan=Loan.new
+      end
+      
+      if params[:nvid].blank?
+        dbloan.info= params
+        dbloan.email = params[:Email]
+        dbloan.created_date = time.strftime("%Y-%m-%d %H:%M:%S")
+        dbloan.id = @new_id
+        dbloan.incomplete = 1
+      else
+         @info_arr = dbloan.info
+        @innfo_arr=@info_arr.merge(params)
+        dbloan.info = @innfo_arr
+      end
+      unless params[:_SocialSecurityNumber].blank? 
+        dbloan.completed = 1
+        dbloan.incomplete = 0
+      end
+      dbloan.save
+       unless params[:_SocialSecurityNumber].blank? 
+        LoanUrlMailer.complete_loan(params[:nvid]).deliver
+      end
+     end
+     render json: dbloan
+  end
+
+  def incomplete_loans
+    ids=params[:id].split(",")
+    ids.each do |id|
+      num = id.to_i
+      LoanUrlMailer.incomplete_loan(num).deliver
+    end
+    render json: "OK"
+  end
+  
+  def add_folder
+    folder = CustomFolder.new
+    folder.folder_name = params[:folder_name]
+    folder.loan_id = params[:loan_id]
+    folder.user_id = params[:user_id]
+    folder.save
+
+    @folders = CustomFolder.all(:loan_id => params[:loan_id].to_i, :delete.ne=>1, :hide.ne=>1)
+    render partial: 'loans/all_folders'
+  end
+
+  def verify_custom_authenticity_token
+  # checks whether the request comes from a trusted source
+  end
+
+  def loan_detail
+  end
 end

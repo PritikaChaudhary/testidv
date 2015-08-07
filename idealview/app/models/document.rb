@@ -4,6 +4,6 @@ class Document
   key :loan_id, :required=>true
   key :name, String
   key :category, String
-
-
+  key :hide, Integer
+  key :delete, Integer
 end

@@ -1,5 +1,5 @@
-
-<% if (!field_value.blank? && field_value != 0) || current_user %>
+<%  if (!field_value.blank? && field_value != 0) || current_user
+  %>
 <%= form_tag({:controller=>'loans', :action=>'edit_field',:id=>contact_id, :field=>field_name, :edit=>false, :format_type=>format_type}, :onSubmit => 'return false', :id=>field_name+'-form') do %>
 		  <%= hidden_field_tag 'contact_id', contact_id %>
 		  <%= hidden_field_tag 'field_type', field_type %>

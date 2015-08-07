@@ -1,0 +1,4 @@
+<% @hostname = request.host
+	@portnum =  request.port
+	abort("#{@portnum}")
+%>

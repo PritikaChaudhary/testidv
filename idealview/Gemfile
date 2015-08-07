@@ -80,7 +80,13 @@ end
 gem 'infusionsoft'
 gem "jquery-fileupload-rails"
 
+#gem to generate PDF
+gem 'prawn'
+gem 'pdfkit'
 
+gem 'awesome_print'
+gem 'wicked_pdf'
+gem 'will_paginate'
 
 
 

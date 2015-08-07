@@ -1,0 +1,128 @@
+<style>
+.br-header{position: relative; float: left; width: 100%; margin-top:10px;}
+ form#search_form {position: absolute;right: 0;top: 0;}
+ .form_wrap{float: left; width: 100%; position: relative;}
+ .form_wrap > input#search_btn {
+    height: 34px;
+    position: absolute;
+    right:1px;
+    border: none;
+    background-image:url("assets/search.png"); 
+    background-repeat: no-repeat;
+    top: 1px;
+    width: 36px;
+    background-position: center;
+    cursor: pointer;
+}
+.large-3 {
+    width: 33%;
+}
+</style>
+<script type="text/javascript">
+
+    jQuery(function($) { $.extend({
+    form: function(url, data, method) {
+        if (method == null) method = 'POST';
+        if (data == null) data = {};
+
+        var form = $('<form>').attr({
+            method: method,
+            action: url
+         }).css({
+            display: 'none'
+         });
+
+        var addData = function(name, data) {
+            if ($.isArray(data)) {
+                for (var i = 0; i < data.length; i++) {
+                    var value = data[i];
+                    addData(name + '[]', value);
+                }
+            } else if (typeof data === 'object') {
+                for (var key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        addData(name + '[' + key + ']', data[key]);
+                    }
+                }
+            } else if (data != null) {
+                form.append($('<input>').attr({
+                  type: 'hidden',
+                  name: String(name),
+                  value: String(data)
+                }));
+            }
+        };
+
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                addData(key, data[key]);
+            }
+        }
+
+        return form.appendTo('body');
+    }
+    });
+
+   
+ });
+
+</script>
+<div class="row">
+    <div class="br-header">
+        
+        <h3 class='text-center'>Broker Details</h3>
+        
+    </div>
+</div>
+<div class="row">
+    <div class="broker_details" style="margin-bottom:20px;">
+    <% unless @broker.firstName.blank? %>
+        <%= @broker.firstName+' '+@broker.lastName %><br>    
+    <% end %>
+    <%= @broker.email %><br>
+    <%= @broker.phone1 %><br>
+    <%= @broker.company %>
+    </div>
+</div>
+<% unless @loans.blank? %>
+<div class='row' id="broker_records" style="border-top: 7px solid rgb(242, 242, 242);">
+    <%= render partial: 'layouts/messages' %>
+    <% color_class = ''%>
+    <% @loans.each do |loan| 
+         unless loan['delete']==1 %>
+        <div class='row <%=color_class%> bottom-space text-left'>
+            <div class='large-3 columns'>
+                <a href="http://idealview.us/loans/<%= loan.id %>">
+                    <% unless loan.name.blank? %>
+                        <%= loan.name %>
+                    <% else %>
+                         "N/A"
+                    <% end %>
+                 </a>
+            </div>
+
+            <div class='large-3 columns'>
+            <span>Net Amount: </span> 
+                <%= fd_money(loan.info['_NetLoanAmountRequested0']) %>
+            </div>
+            
+            <div class='large-3 columns'>
+              <span> Location: </span> 
+             <% if loan.info['City3'].blank? && loan.info['State3'].blank? %>
+			   N/A
+			<% else %>
+			  <%=loan.info['City3']+', '%> <%=loan.info['State3']%>
+			<% end %>
+            </div>
+        </div>
+
+        <% color_class.blank? ? (color_class='even-row'):(color_class='') %>
+
+    <%
+    end
+end %>
+
+</div>
+<% end %>
+
+ 

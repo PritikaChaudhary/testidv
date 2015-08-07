@@ -1,3 +1,15 @@
+<script type="text/javascript">
+	
+		var checkadmin = "<%= @checkAdmin %>";
+		var checkbroker = "<%= @checkBroker %>";
+		if(checkadmin=="false" && checkbroker=="true")
+		{
+			window.location.replace("http://idealview.us/loans");
+			//self.location="http://localhost:3000/loans";
+		}
+
+	
+</script>
 <% breadcrumb :root %>
 <div class='row'>
 	<div class="small-8 small-centered columns">
