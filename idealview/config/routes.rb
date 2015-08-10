@@ -120,6 +120,7 @@ Rails.application.routes.draw do
   get "admin/edit_user/:id" => "admin#edit_user", as: :admins_edit_user
   patch "admin/edit_user/:id" => "admin#update_user", as: :admins_update_user
   delete "admin/destroy_user/:id" => "admin#destroy_user", as: :admins_destroy_user
+  get "admin/select_plan" => "admin#select_plan"
 
 
 

@@ -119,6 +119,8 @@ class AdminController < ApplicationController
   end   
  end
  
+ def select_plan
+ end
  
  
 end

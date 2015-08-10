@@ -112,7 +112,6 @@
     // The File Upload Resize plugin extends the fileupload widget
     // with image resize functionality:
     $.widget('blueimp.fileupload', $.blueimp.fileupload, {
-
         options: {
             // The regular expression for the types of images to load:
             // matched against the file type:
