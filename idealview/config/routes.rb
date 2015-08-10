@@ -55,7 +55,7 @@ Rails.application.routes.draw do
   post 'loans/show_doc'=>'loans#show_doc'
   post 'loans/del_doc'=>'loans#del_doc'
   post 'loans/del_folder'=>'loans#del_folder'
-  get 'loans/lender_page/:id'=>'loans#lender_page'
+  get 'loans/detail/:id'=>'loans#detail'
 
   #post 'loans/application' => 'loans#application', as: :loans_application
 

@@ -73,7 +73,16 @@
 		 %>
 
 		<% @url=url_for :controller=>'loans', :action=>'edit_field',:id=>contact_id, :field=>field_name, :edit=>true, :format_type=>format_type%>
-		<span style='min-width:20px;min-height:20px' <% if policy(Loan).update? %> ondblclick='callAjax("<%=@url%>","<%=field_name%>","<%=field_name+'-form'%>")' <% end %>>
+		<% #roleCheck = policy(Loan).update
+			#abort("#{roleCheck.inspect}")
+			 %>
+
+		<% if(@brokerLogin==true) 
+		 %>
+				<span style='min-width:20px;min-height:20px'   ondblclick='callAjax("<%=@url%>","<%=field_name%>","<%=field_name+'-form'%>")'  >
+		<% else %>
+				<span style='min-width:20px;min-height:20px' <% if policy(Loan).update? %> ondblclick='callAjax("<%=@url%>","<%=field_name%>","<%=field_name+'-form'%>")' <% end %>>
+		<% end %>
 			<% if !field_label.blank? %>
 			<span style='font-weight:bold'><%=field_label%></span><BR>
 			<% end %>

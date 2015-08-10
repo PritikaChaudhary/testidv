@@ -62,7 +62,7 @@ background: #000000 !important;
 .hl-list { list-style:none; margin: 0; padding: 0; float:left; width:100%; }
 .hl-list li { margin: 0; padding: 0; float:left; width:100%; border-bottom:1px solid #777777; margin-bottom:10px; }
 .hl-l{max-width: 50%; color: #777777; }
-.hl-r {  float: right; max-width: 50%; }
+.hl-r {  max-width: 50%; padding-left: 7px; }
 .l-sidebar .btn {
     width: 100%;
     display: inline-block;
@@ -83,7 +83,7 @@ background: #000000 !important;
 .lp-tabs-head > div .icon-r{ top:-20px; display: inline-block; position: relative; height: 0; }
 .sbanner-wrap { border: 1px solid #eaeaea; border-radius: 4px; margin-bottom: 20px; background-color:#ffffff; }
 .lp-th-title { color: #333333;  font-weight: 700; margin: 0; }
-.white-content-box{border: 1px solid #eaeaea; border-radius: 4px; margin-bottom: 20px;}
+.white-content-box{border: 1px solid #eaeaea; border-radius: 4px; margin-bottom: 20px; background: none repeat scroll 0 0 #ffffff;}
 .wcb-head { background-color: #eaeaea; padding: 12px 30px; color: #333333; font-size: 24px; line-height: 1; }
 .wcb-content { padding: 25px 30px;  }
 .add-files-outer{ border-bottom: 1px solid #eaeaea; margin-bottom: 20px; padding-bottom: 20px;}
@@ -125,3 +125,7 @@ button, .button{padding:.5rem 1rem 0.5625rem 1rem;}
 .add-listing-section { float: left; width: 100%; padding: 20px 0; }
 
 /******************List Detail Page Style end******************/
+
+div.loan_head{
+    background-color: #f1f1f1;
+}

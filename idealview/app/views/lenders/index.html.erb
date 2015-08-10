@@ -22,7 +22,7 @@
 }
 .large-3
 {
-    width: 18%;
+    width: 23%;
     word-wrap: break-word;
 }
 .large-2
@@ -644,18 +644,7 @@ function order_lenderhide(id)
 
               
             </div>
-              <div class='large-3 columns'>
-               
-                 
-                        <% unless lender.lendingStates0.blank? %>
-                           Lending States : <%= lender.lendingStates0 %>
-                        <% else %>
-                            N/A
-                        <% end %>
-                  
-
-              
-            </div>
+             
 
             <div class='large-3 columns'>
                 <%= lender.email %>

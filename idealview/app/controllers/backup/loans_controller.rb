@@ -191,7 +191,6 @@ class LoansController < ApplicationController
       end
       loan_url.visits<<Time.now.getutc
       loan_url.save
-      redirect_to action: 'detail', id: params[:id]
     end
 
     if @loan.blank? && !current_user.blank?
@@ -245,146 +244,75 @@ class LoansController < ApplicationController
   
  
   def edit_field
-    if(@brokerLogin==true)
-       @temp = params
-        @field = params[:field]
-        @format_type = params[:format_type]
-        
-        @field_value = params[@field]
-        if @format_type == 'fd_money'
-          @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
-        end
-        if @format_type == 'fd_date'
-         # @field_value = @field_value.strftime("%m/%d/%Y")
-        end
-    
-       
-    
-        if params[:edit]=='true'
-          #render text: "#{@temp}"
-          render partial: 'mini_form', locals:
-          {
-            edit: true,
-            contact_id: params[:contact_id],
-            format_type:params[:format_type], 
-            field_type: params[:field_type], 
-            field_label: params[:field_label], 
-            field_name:params[:field_name],
-            field_value:@field_value,
-            field_options:params[:field_options]
-          } 
-        else
-         if !params.has_key?('cancel')
-           #Save
-            loan_info = Loan.find_by_id(params[:contact_id].to_i)
-            loan_info.info[params[:field_name]] =  @field_value
-                    
-            if params[:field_name] == "Email"
-              loan_info.email = @field_value
-            end
-            
+    if policy(Loan).update?
+      
 
-            if params[:field_name] == "_LoanName"
-              loan_info.name = @field_value
-            end
-            
-            #abort("#{loan_info.inspect}")
-            loan_info.save
-         else
-           #Cancel
-           loan_info = Loan.find_by_id(params[:contact_id].to_i)
-           @field_value = loan_info.info[params[:field_name]]
-            if @format_type == 'fd_money'
-             @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
-            end
-             
-          end
-    
-          render partial: 'mini_form', locals:
-          {
-            edit: false,
-            contact_id: params[:contact_id],
-            format_type:params[:format_type],
-            field_type: params[:field_type], 
-            field_label: params[:field_label], 
-            field_name:params[:field_name],
-            field_value:@field_value, 
-            field_options:params[:field_options]
-          } 
-        end
-    else
-
-
-      if policy(Loan).update?
-        
-
-        @temp = params
-        @field = params[:field]
-        @format_type = params[:format_type]
-        
-        @field_value = params[@field]
-        if @format_type == 'fd_money'
-          @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
-        end
-        if @format_type == 'fd_date'
-         # @field_value = @field_value.strftime("%m/%d/%Y")
-        end
-    
-       
-    
-        if params[:edit]=='true'
-          #render text: "#{@temp}"
-          render partial: 'mini_form', locals:
-          {
-            edit: true,
-            contact_id: params[:contact_id],
-            format_type:params[:format_type], 
-            field_type: params[:field_type], 
-            field_label: params[:field_label], 
-            field_name:params[:field_name],
-            field_value:@field_value,
-            field_options:params[:field_options]
-          } 
-        else
-         if !params.has_key?('cancel')
-           #Save
-            loan_info = Loan.find_by_id(params[:contact_id].to_i)
-            loan_info.info[params[:field_name]] =  @field_value
-                    
-            if params[:field_name] == "Email"
-              loan_info.email = @field_value
-            end
-            
-
-            if params[:field_name] == "_LoanName"
-              loan_info.name = @field_value
-            end
-            
-            #abort("#{loan_info.inspect}")
-            loan_info.save
-         else
-           #Cancel
-           loan_info = Loan.find_by_id(params[:contact_id].to_i)
-           @field_value = loan_info.info[params[:field_name]]
-            if @format_type == 'fd_money'
-             @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
-            end
-             
-          end
-    
-          render partial: 'mini_form', locals:
-          {
-            edit: false,
-            contact_id: params[:contact_id],
-            format_type:params[:format_type],
-            field_type: params[:field_type], 
-            field_label: params[:field_label], 
-            field_name:params[:field_name],
-            field_value:@field_value, 
-            field_options:params[:field_options]
-          } 
-        end  
+      @temp = params
+      @field = params[:field]
+      @format_type = params[:format_type]
+      
+      @field_value = params[@field]
+      if @format_type == 'fd_money'
+        @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
       end
+      if @format_type == 'fd_date'
+       # @field_value = @field_value.strftime("%m/%d/%Y")
+      end
+  
+     
+  
+      if params[:edit]=='true'
+        #render text: "#{@temp}"
+        render partial: 'mini_form', locals:
+        {
+          edit: true,
+          contact_id: params[:contact_id],
+          format_type:params[:format_type], 
+          field_type: params[:field_type], 
+          field_label: params[:field_label], 
+          field_name:params[:field_name],
+          field_value:@field_value,
+          field_options:params[:field_options]
+        } 
+      else
+       if !params.has_key?('cancel')
+         #Save
+          loan_info = Loan.find_by_id(params[:contact_id].to_i)
+          loan_info.info[params[:field_name]] =  @field_value
+                  
+          if params[:field_name] == "Email"
+            loan_info.email = @field_value
+          end
+          
+
+          if params[:field_name] == "_LoanName"
+            loan_info.name = @field_value
+          end
+          
+          #abort("#{loan_info.inspect}")
+          loan_info.save
+       else
+         #Cancel
+         loan_info = Loan.find_by_id(params[:contact_id].to_i)
+         @field_value = loan_info.info[params[:field_name]]
+          if @format_type == 'fd_money'
+           @field_value = @field_value.to_s.gsub(/[^\d\.]/, '')
+          end
+           
+        end
+  
+        render partial: 'mini_form', locals:
+        {
+          edit: false,
+          contact_id: params[:contact_id],
+          format_type:params[:format_type],
+          field_type: params[:field_type], 
+          field_label: params[:field_label], 
+          field_name:params[:field_name],
+          field_value:@field_value, 
+          field_options:params[:field_options]
+        } 
+      end  
     end
   end
   
@@ -1744,18 +1672,5 @@ def pdforder
 
   def verify_custom_authenticity_token
   # checks whether the request comes from a trusted source
-  end
-
-  def detail
-    loan_url = LoanUrl.find_by_url(params[:id])
-    
-    if loan_url
-      @loan = Loan.find_by_id(loan_url.loan_id)
-      #abort("#{@loan.inspect}")
-    else
-      flash[:alert] ='You have either selected an invalid loan or you are not authorized to view this loan.'
-      redirect_to '/'
-    end
-  
   end
 end

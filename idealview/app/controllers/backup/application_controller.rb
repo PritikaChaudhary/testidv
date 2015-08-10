@@ -39,7 +39,6 @@ class ApplicationController < ActionController::Base
         end
         checkAdmin = @names.include?('Admin') 
         checkBroker = @names.include?('Broker')
-        @brokerLogin = @names.include?('Broker')
       end
 
       if checkBroker==true

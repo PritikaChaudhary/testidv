@@ -2,6 +2,10 @@ class AdminController < ApplicationController
 
   def index
     @users = User.all
+    #usr = User.find_by_email("lloveland@cacheprivatecapital.com")
+    #usr.password= "12345678"
+    #usr.save
+    #abort("#{usr.inspect}")
     authorize User
   end
   

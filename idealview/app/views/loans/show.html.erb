@@ -211,7 +211,9 @@ function lender_change(sts, id)
     }
 
 </script>
-<div class='row'>
+
+<div class='loan_head'>
+<div class="row">
 <h1 class='text-left loan-heading'>
 		<%temp_name = '_LoanName'%>
 		<span id='<%=temp_name%>'>
@@ -229,7 +231,8 @@ function lender_change(sts, id)
 		</span>
 
 </h1>
-</div>
+</div> <!-- row -->
+</div> <!-- loan_main -->
 <% #abort("#{@loan.inspect}")%>
 <% if policy(@loan).update? %>
 <div id='show-urls' style='padding-left:50px;padding-right:50px;'>
