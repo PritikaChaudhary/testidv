@@ -191,7 +191,7 @@ class LendersController < ApplicationController
     end
 
     unless params['loanMaxDropDown'].blank?
-        max = params['loanMaxDropDown']s
+        max = params['loanMaxDropDown']
         if params['loanMinDropDown'].blank?
             min=0
         else

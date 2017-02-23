@@ -182,7 +182,6 @@ class LoansController < ApplicationController
   end
   
   def show
-  #  bucket = S3.create_bucket(bucket: 'testbusketxyz')
    loan_url = LoanUrl.find_by_url(params[:id])
 
     if loan_url
@@ -489,12 +488,12 @@ class LoansController < ApplicationController
   #upload the main image for the loan
   def upload_main_image
    loan=Loan.find_by_id(params[:id].to_i)
-   up_size = number_to_human_size(params[:upload].size)
    uploaded_io = params[:upload]
    file_name = uploaded_io.original_filename
-   File.open(Rails.root.join('public', 'temp', file_name), 'wb') do |file|
-   contents = uploaded_io.read
-   file.write(contents)
+   
+    File.open(Rails.root.join('public', 'temp', file_name), 'wb') do |file|
+      contents = uploaded_io.read
+      file.write(contents)
       
       
       # Make an object in your bucket for your upload
@@ -506,10 +505,7 @@ class LoansController < ApplicationController
                key: key_name,
                body: contents
                )
-      
-
-       
-
+    
        #clear all featured image tags
         @check = false
         loan.images.each do |img|
@@ -1354,7 +1350,7 @@ def hide_file
 
  def delete_loans
   ids=params[:moredata].split(",").map { |s| s.to_i }
-  ids.each do |number|
+ 	ids.each do |number|
       loanRecord=Loan.find(number)
       loanRecord.delete=1
       loanRecord.save
@@ -1364,12 +1360,12 @@ def hide_file
  end
 
  def save_loc
-  id=params[:id].split(",").map { |s| s.to_i }
-  loan=Loan.find_by_id(id)
-  loan.info["City3"] = params[:City3] 
-  loan.info["State3"] = params[:State3] 
+ 	id=params[:id].split(",").map { |s| s.to_i }
+ 	loan=Loan.find_by_id(id)
+	loan.info["City3"] = params[:City3] 
+ 	loan.info["State3"] = params[:State3] 
     loan.save()
-  render nothing: true
+	render nothing: true
   end
 
   def edit_info
@@ -1761,13 +1757,4 @@ def pdforder
     end
   
   end
-
-  def incomplete_fd_loans
-    now_time = Time.now
-    abort("#{now_time}")
-    adjusted_datetime = (now_time - 1.hours).to_datetime
-
-    @loans = Loan.all(:created_at => ('$lt' => now_time-1,))
-  end 
-  
 end

@@ -1761,13 +1761,4 @@ def pdforder
     end
   
   end
-
-  def incomplete_fd_loans
-    now_time = Time.now
-    abort("#{now_time}")
-    adjusted_datetime = (now_time - 1.hours).to_datetime
-
-    @loans = Loan.all(:created_at => ('$lt' => now_time-1,))
-  end 
-  
 end

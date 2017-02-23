@@ -11,7 +11,9 @@ Rails.application.routes.draw do
   #get 'home/test'=> 'home#test'
   get 'loans/:id'=>'loans#show'
   get 'loans/docs/:id'=>'loans#docs'
+   get 'loans/incomplete_fd_loans/:id'=>'loans#incomplete_fd_loans'
   get 'loans/show_pdf/:id'=>'loans#show_pdf'
+
   get 'loans'=>'loans#index'
   post 'loans/edit_field/:id/:field'=>'loans#edit_field'
   post 'loans/:id/edit_category'=>'loans#edit_category'
@@ -109,6 +111,8 @@ Rails.application.routes.draw do
 
   #get 'loans/temp/get_images'=>'loans#temp'
 
+  get "payments/select_plan" => "payments#select_plan"
+  post "payments/payment_successfull" => "payments#payment_successfull"
 
 
 
@@ -120,7 +124,7 @@ Rails.application.routes.draw do
   get "admin/edit_user/:id" => "admin#edit_user", as: :admins_edit_user
   patch "admin/edit_user/:id" => "admin#update_user", as: :admins_update_user
   delete "admin/destroy_user/:id" => "admin#destroy_user", as: :admins_destroy_user
-  get "admin/select_plan" => "admin#select_plan"
+
 
 
 

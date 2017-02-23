@@ -1,0 +1,532 @@
+<input type="button" value="Add More Borrower" class="button">
+<div id="borrower_num_1">
+	<h3><%= @serial_num %>. Borrower Information :</h3>
+	<div class='panel bottom-space'>
+	<div style="margin-bottom:10px;"><span class="hl-l detail_title" tabindex="0">PERSONAL INFORMATION :</span></div>
+
+		
+	 <div class="row" >	
+			<div id='personal_name' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Name', 
+						field_name:'personal_name',
+						field_value:@borrower.personal_name,
+						field_options:'',
+					} %>
+			</div>
+		
+			
+			<%temp_name = 'personal_phone'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_phone',
+						field_type: 'text_field_tag', 
+						field_label: 'Phone', 
+						field_name:temp_name,
+						field_value:@borrower.personal_phone,
+						field_options:'',
+					} %>
+			</div>
+
+			
+			<%temp_name = 'personal_email'%>
+			<div id='personal_email' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'email_field_tag', 
+						field_label: 'Email', 
+						field_name:temp_name,
+						field_value:@borrower.personal_email,
+						field_options:'',
+					} %>
+			</div>
+	</div>
+
+	<div class='row'>			
+			<%temp_name = 'personal_address'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Address', 
+						field_name:temp_name,
+						field_value:@borrower.personal_address,
+						field_options:'',
+					} %>
+			</div>
+
+
+			<%temp_name = 'personal_city'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'City', 
+						field_name:temp_name,
+						field_value:@borrower.personal_city,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'personal_state'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'select_tag', 
+						field_label: 'State', 
+						field_name:temp_name,
+						field_value:@borrower.personal_state,
+						field_options:'Loan.states',
+					} %>
+			</div>
+
+			
+			
+	</div>
+
+
+
+	<div class='row'>
+			<%temp_name = 'personal_postalcode'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Zip', 
+						field_name:temp_name,
+						field_value:@borrower.personal_postalcode,
+						field_options:'',
+					} %>
+			</div>
+
+			<%temp_name = 'personal_dob'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_date',
+						field_type: 'date_field_tag', 
+						field_label: 'Birthday', 
+						field_name:temp_name,
+						field_value:@borrower.personal_dob,
+						field_options:'',
+					} %>
+			</div>
+			
+			
+			
+			<%temp_name = 'personal_ein'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_ssn',
+						field_type: 'password_field_tag', 
+						field_label: 'EIN', 
+						field_name:temp_name,
+						field_value:@borrower.personal_ein,
+						field_options:'',
+					} %>
+			</div>
+
+
+			
+	</div>
+
+	<div class='row'>
+			<%temp_name = 'personal_ssn'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_ssn',
+						field_type: 'password_field_tag', 
+						field_label: 'SSN', 
+						field_name:temp_name,
+						field_value:@borrower.personal_ssn,
+						field_options:'',
+					} %>
+			</div>
+
+			<%temp_name = 'personal_gross'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Gross Monthly Income', 
+						field_name:temp_name,
+						field_value:@borrower.personal_gross,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'personal_cashContribution'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Borrower Cash Contribution', 
+						field_name:temp_name,
+						field_value:@borrower.personal_cashContribution,
+						field_options:'',
+					} %>
+			</div>
+	</div>		
+
+
+	</div>
+
+	<div class='row'>
+			<%temp_name = 'bio'%>
+			<div id='<%=temp_name%>' style="margin-top:10px;">
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'simple_format',
+						field_type: 'text_area_tag', 
+						field_label: 'Borrower Bio', 
+						field_name:temp_name,
+						field_value:@borrower.bio,
+						field_options:'',
+					} %>
+			</div>
+	</div>
+
+	<div class='panel bottom-space'>
+	<div style="margin-bottom:10px;"><span class="hl-l detail_title" tabindex="0">BUSINESS INFORMATION :</span></div>
+		<div class='row'>
+			<%temp_name = 'business_name'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Name', 
+						field_name:temp_name,
+						field_value:@borrower.business_name,
+						field_options:'',
+					} %>
+			</div>
+
+
+			<%temp_name = 'business_phone'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_phone',
+						field_type: 'text_field_tag', 
+						field_label: 'Phone', 
+						field_name:temp_name,
+						field_value:@borrower.business_phone,
+						field_options:'',
+					} %>
+			</div>
+
+			<%temp_name = 'business_address'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Address', 
+						field_name:temp_name,
+						field_value:@borrower.business_address,
+						field_options:'',
+					} %>
+			</div>
+		</div>
+		
+		
+		<div class='row'>
+		
+			
+
+
+
+
+			<%temp_name = 'business_city'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'City', 
+						field_name:temp_name,
+						field_value:@borrower.business_city,
+						field_options:'',
+					} %>
+			</div>
+
+
+			<%temp_name = 'business_state'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'State', 
+						field_name:temp_name,
+						field_value:@borrower.business_state,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'business_postalcode'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'text_field_tag', 
+						field_label: 'Zip', 
+						field_name:temp_name,
+						field_value:@borrower.business_postalcode,
+						field_options:'',
+					} %>
+			</div>
+		</div>
+		
+		
+		
+		<div class='row'>
+			<%temp_name = 'time_in_business'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'select_tag', 
+						field_label: 'Time In Business', 
+						field_name:temp_name,
+						field_value:@borrower.time_in_business,
+						field_options:'Loan.time_options',
+					} %>
+			</div>
+
+
+			<%temp_name = 'revenue_time_period'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_text',
+						field_type: 'select_tag', 
+						field_label: 'Years of Revenue', 
+						field_name:temp_name,
+						field_value:@borrower.revenue_time_period,
+						field_options:'Loan.time_options',
+					} %>
+			</div>
+
+
+			<%temp_name = 'business_ein'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_ssn',
+						field_type: 'text_field_tag', 
+						field_label: 'Business EIN', 
+						field_name:temp_name,
+						field_value:@borrower.business_ein,
+						field_options:'',
+					} %>
+			</div>
+		</div>
+	</div>
+
+
+	<div class='panel bottom-space' style="margin-top:17px !important;">
+		<div style="margin-bottom:10px;"><span class="hl-l detail_title" tabindex="0">BUSINESS FINANCIALS :</span></div>
+
+
+
+		<div class='row'>
+			<%temp_name = 'cash_on_hand'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Cash On Hand', 
+						field_name:temp_name,
+						field_value:@borrower.cash_on_hand,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'est_fico'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_number',
+						field_type: 'text_field_tag', 
+						field_label: 'Est. FICO', 
+						field_name:temp_name,
+						field_value:@borrower.est_fico,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'available_credit'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Available Credit', 
+						field_name:temp_name,
+						field_value:@borrower.available_credit,
+						field_options:'',
+					} %>
+			</div>
+		</div>
+		
+		
+		
+		<div class='row'>
+
+			<%temp_name = 'monthly_noi'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Monthly NOI', 
+						field_name:temp_name,
+						field_value:@borrower.monthly_noi,
+						field_options:'',
+					} %>
+			</div>
+
+
+			<%temp_name = 'annual_noi'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Annual NOI', 
+						field_name:temp_name,
+						field_value:@borrower.annual_noi,
+						field_options:'',
+					} %>
+			</div>
+
+
+
+			<%temp_name = 'account_recievable'%>
+			<div id='<%=temp_name%>' class='medium-4 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Accounts Receivable', 
+						field_name:temp_name,
+						field_value:@borrower.account_recievable,
+						field_options:'',
+					} %>
+			</div>
+
+
+			
+		</div>
+		<div class="row">
+			<%temp_name = 'account_payable'%>
+			<div id='<%=temp_name%>' class='medium-3 columns custom-info'>
+				<%= render partial: 'borrower_mini_form', locals:
+					{
+						edit: false,
+						contact_id:@borrower['_id'],
+						format_type:'fd_money',
+						field_type: 'text_field_tag', 
+						field_label: 'Accounts Payable', 
+						field_name:temp_name,
+						field_value:@borrower.account_payable,
+						field_options:'',
+					} %>
+			</div>
+		</div>
+
+
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+			
