@@ -1,0 +1,59 @@
+<style>
+ .sortbtn
+ {
+ 	width:153px;
+ }
+
+ .generatepdf
+ {
+ 	float: right;
+ 	margin-right: 142px;
+ }
+</style>
+<script type="text/javascript">
+	function generate_pdf()
+	{
+		 var allVals = [];
+		$('input[name="select_loan"]:checked').each(function(){
+			allVals.push($(this).val());
+		});
+		if (allVals.length === 0) {
+    		alert("Please select atleast one loan.");
+    		return false;
+    	}
+		var data = "&moredata=" + allVals;
+		$.ajax({
+                data: data,
+                type: 'POST',
+                url: '/loans/generate_pdf',
+                success:function(response){
+                 // window.open('http://idealview.us/loans/show_pdf/'+response);
+                $("a#pdf_download").attr("href","http://idealview.us/pdfs/"+response);
+                $("a#pdf_download").fadeIn();
+            }
+            });
+
+	}
+
+	
+</script>
+<div class="sort_buttons" style='margin-left:142px; margin-top:19px;'>
+<% @url=url_for :controller=>'loans', :action=>'recent', :sort=>'desc' %>
+<%= button_tag "Recent",  onclick:"callAjax('#{@url}','loan_records', 'all_loans' )", class: 'tiny button success sortbtn'%>
+
+<% @url=url_for :controller=>'loans', :action=>'priority', :sort=>'ordering' %>
+<%= button_tag "Priority",  onclick:"callAjax('#{@url}','loan_records', 'all_loans' )", class: 'tiny button success sortbtn'%>
+
+<%= button_tag "Generate PDF",  onclick:"generate_pdf()", class: 'tiny button success generatepdf'%>
+<a id="pdf_download" href="#" download target="_blank" style="display:none;">Download PDF</a>
+</div>
+
+
+
+
+<h3 class='text-center'>Current Loans</h3>
+<div class='row' id="loan_records">
+<%= render partial: 'all_loans'%>
+</div>
+
+ 

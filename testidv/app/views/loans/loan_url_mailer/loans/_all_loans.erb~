@@ -1,0 +1,98 @@
+<% color_class = ''%>
+<% @loans.each do |loan_rec|
+	loan=loan_rec.info || Loan.new
+	#abort("#{loan.inspect}")
+
+ %>
+<div class='row <%=color_class%> bottom-space text-left'>
+	<% if loan_rec.name.blank?
+		#abort("#{loan|Loan_id|}")
+	    loan_name = 'No Loan Title'
+	  else
+		loan_name = loan_rec.name
+	  end
+
+	%>
+	<div class='large-2 columns'>
+	<input type="checkbox" id="check_<%= loan_rec.id %>" name="select_loan" value="<%= loan_rec.id %>">
+	</div>
+	<div class='large-3 columns'><h5>  <a href='<%=url_for :controller=>'loans', :action=>'show',:id=>loan_rec.id%>'><%= loan_name%></a></h5></div>
+	<div class='large-2 columns'>
+		<span>Net Amount:</span><BR>
+		<% if loan['_NetLoanAmountRequested0'].blank? %>
+			N/A
+		<% else %>
+			<%=fd_money(loan['_NetLoanAmountRequested0'])%>
+		<% end %>
+	</div>
+	
+	<div class='large-2 columns'>
+		<span>Location :</span>
+		<% if loan['City3'].blank? && loan['State3'].blank? %>
+		   N/A
+		<% else %>
+		  <%=loan['City3']+', '%> <%=loan['State3']%>
+		<% end %>
+	</div>
+
+    <% @shop_loan_id = 'shop-loan-'+loan['Id'].to_s %>
+
+    <div id='<%=@shop_loan_id%>' class='large-3 columns'>
+        
+        <% @url=url_for :controller=>'loans', :action=>'send_to_cpc', :id=>loan_rec.id, :only_path=>false%>
+          <%= button_tag "Send To CPC", onclick:"callAjax('#{@url}','#{@shop_loan_id}');", class: 'tiny button success'%>
+
+
+
+        <% if loan['_LenderEmail'].blank? %>
+ 			<% @url=url_for :controller=>'api/actions', :action=>'manual_shop_loan', :id=>loan_rec.id, :token=>'54b0c58c7ce9f2a8b551351102ee0938', :only_path=>false%>
+          <%= button_tag "Shop Loan", onclick:"if(confirm('Are you sure? This will start sending emails!')){callAjax('#{@url}','#{@shop_loan_id}');}", class: 'tiny button'%>
+        <% end %>
+          <% @url=url_for :controller=>'loans', :action=>'archive', :id=>loan_rec.id, :only_path=>false%>
+          <%= button_tag "Archive", onclick:"if(confirm('Are you sure? This will permanently clear the loan from the list!')){callAjax('#{@url}','#{@shop_loan_id}');}", class: 'tiny button alert'%>
+
+
+    </div>
+  
+    
+    
+	<div class='hide'>
+		<div class='large-4 columns'>
+			<div class='label secondary'>Transaction Type</div><BR>
+			<% if loan['_TransactionType0'].blank? %>
+				N/A
+			<% else %>
+				<%=loan['_TransactionType0']%>
+			<% end %>
+		</div>
+		<div class='large-4 columns'>
+			<div class='label secondary'>Cash Contribution</div><BR>
+			<% if loan['_CashContribution'].blank? %>
+				N/A
+			<% else %>
+				<%=fd_money(loan['_CashContribution'])%>
+			<% end %>
+		</div>
+		<div class='large-4 columns'>
+			<div class='label secondary'>Desired Term Length</div><BR>
+			<% if loan['_DesiredTermLength'].blank? %>
+				N/A
+			<% else %>
+				<%=Loan.term_lengths.invert[loan['_DesiredTermLength']]%>
+			<% end %>
+		</div>
+		<div class='large-4 columns left'>
+			<div class='label secondary'>Expected Close Date</div><BR>
+			<% if loan['_DesiredTermLength'].blank? %>
+				N/A
+			<% else %>
+				<%=fd_xml_to_date(loan['_ExpectedCloseDate'])%>
+			<% end %>
+		</div>
+	</div>
+	
+</div>
+
+<% color_class.blank? ? (color_class='even-row'):(color_class='') %>
+
+<% end %>

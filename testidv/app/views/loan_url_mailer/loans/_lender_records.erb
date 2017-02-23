@@ -1,0 +1,38 @@
+<% if @lenders.loan_urls.empty? %>
+	<div class="lender_inner" style="float:left; margin-left:130px; width:100%">
+	No lenders found.
+	</div>
+<% else  %>
+<% @lenders.loan_urls.each do |loan_url|%>
+<div class="lender_inner" style="float:left; margin-left:130px; width:100%">
+			<div class='large-3 columns' style="float:left; margin-top:8px;">
+				<span><%= loan_url.name%></span>
+			</div>
+			<div class='large-3 columns' style="float:left;">
+				<% unless loan_url.status.blank? %>
+					<select name="status" class="lender_status" id="lender<%=loan_url.id%>" onchange="lender_change(this, '<%=loan_url.id%>')" >
+						<option value="">Status</option>
+						<option <% if loan_url.status=="Opened" %> selected="selected" <% end %> value="Opened">Opened</option>
+						<option <% if loan_url.status=="Unopened" %> selected="selected" <% end %> value="Unopened">Unopened</option>
+						<option <% if loan_url.status=="Interested" %> selected="selected" <% end %> value="Interested">Interested</option>
+						<option <% if loan_url.status=="Processing" %> selected="selected" <% end %> value="Processing">Processing</option>
+						<option <% if loan_url.status=="Funded" %> selected="selected" <% end %>  value="Funded">Funded</option>
+						<option <% if loan_url.status=="Declined" %> selected="selected" <% end %> value="Declined">Declined</option>
+				    </select>
+				<% else %>
+					<select name="status" class="lender_status" id="lender<%=loan_url.id%>" onchange="lender_change(this, '<%=loan_url.id%>')">
+						<option value="">Status</option>
+						<option value="Opened">Opened</option>
+						<option value="Unopened">Unopened</option>
+						<option value="Interested">Interested</option>
+						<option value="Processing">Processing</option>
+						<option value="Funded">Funded</option>
+						<option value="Declined">Declined</option>
+				    </select>
+				<% end %>
+			</div>
+
+		</div>
+<% end %>
+<% end %>
+		

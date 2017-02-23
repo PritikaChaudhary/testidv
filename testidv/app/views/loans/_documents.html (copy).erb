@@ -1,0 +1,63 @@
+<% Loan.file_categories.each do |cat| %>
+
+
+	<%
+	 if cat=='Other' %>
+		<h3><%=cat%></h3>
+		<%@loan.documents.each do |doc| %>
+			<% if doc.category.blank? %>
+		    <% url=url_for :controller=>'loans', :action=>'view_doc',:id=>doc[:file_id] %>
+		    <a href='<%=url%>' target='_blank'><%=doc.name%></a><BR>
+		    <% end %>
+		<% end %>			    
+	<%end%>
+	
+		
+	
+	<%@loan.docs_by_category(cat).each do |doc| %>
+		<% if doc.delete!=1 %>
+		   <% if !current_user.blank? && (current_user.is_admin || current_user.role?('Admin') ) && controller.action_name=="show" %>
+			  <div class="doc_show" style="height:56px;" id="del_<%= doc.id %>">
+				    <% url=url_for :controller=>'loans', :action=>'view_doc',:id=>doc[:file_id] %>
+				    <a href='<%=url%>' target='_blank'><%=doc.name%></a>
+				   
+				    <div class="hide_del" style="width: 24%; float:right;">
+					    <div class="hidebtn" style="width:80px; float:left;" id="hidebtn_<%= doc.id %>">
+						    
+						    <div id="hidefor_<%= doc.id %>" <% if doc.hide==1 %> style="display:none;" <% end %> >
+						   		<%= button_tag "Hide", onclick:"hide_file('#{doc.id}');", class: 'tiny button alert'%>
+						   	</div>
+						   	
+						   	<div id="showfor_<%= doc.id %>" <% if doc.hide!=1 %> style="display:none;" <% end %>>
+						   		<%= button_tag "Show", onclick:"show_file('#{doc.id}')", class: 'tiny button'%> 
+						   	</div>
+						   	
+					   	</div>
+
+					   	<div class="del" style="width:80px; float:left;">
+					   		<%= button_tag "Delete", onclick:"if(confirm('Are you sure? You want to delete this file')){del_file('#{doc.id}')}", class: 'tiny button'%>
+					   	</div> 
+				   	</div>
+			  </div>
+			   <BR> 
+	       <% else %>
+	       		<% if doc.hide!=1 %>
+		       		 <% url=url_for :controller=>'loans', :action=>'view_doc',:id=>doc[:file_id] %>
+				    <a href='<%=url%>' target='_blank'><%=doc.name%></a>
+				 <% end %> 
+			    <BR> 
+	       <% end %>
+	    <% end %>
+	<% end %>
+
+			<div style='margin-top:30px;width:100%'>
+				<%
+				formId=cat.gsub(',','_') 
+				formId=formId.gsub('&','_') 
+				formId=formId.gsub(' ','_') 
+				%>
+				<%= render partial: 'file_upload', locals:{contact_id:@loan._id, form_id:formId+'_upload', controller:'loans', action:'upload_doc', category:cat, multiple:'true', type:'full', button_label:'Add Files to: '+cat}
+				%>
+			</div>	
+
+<%end %>

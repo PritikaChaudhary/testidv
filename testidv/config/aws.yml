@@ -1,0 +1,13 @@
+# Be sure to restart your server when you modify this file.
+# This is the configuration for the Amazon S3 storage service
+
+development:
+  access_key_id: <%= ENV['AWS_KEY'] %>
+  secret_access_key: <%= ENV['AWS_SECRET'] %>
+
+
+test:
+  <<: *development
+
+  production:
+    <<: *development  
